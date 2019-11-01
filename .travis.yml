@@ -37,6 +37,7 @@ install:
   - export PATH="$HOME/.cargo/bin:$PATH"
   - cmake .
   - make deps
+  -git fetch --unshallow
 
 
 
@@ -46,5 +47,4 @@ script:
   - cmake --version
   - cmake .
   - cmake  --build
-  #- make
-  - ctect
+  - ctect .
