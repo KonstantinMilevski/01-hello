@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/02-sdl-static-debug.dir/main.cxx.o  -o 02-sdl-static-debug  /usr/local/lib/libSDL2.a -lm -ldl -lpthread -lrt 
