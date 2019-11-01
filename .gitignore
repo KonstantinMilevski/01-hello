@@ -2,6 +2,9 @@
 *.d
 #build
 /build
+/build*
+#Cmake.user
+CMakeLists.txt*
 # Compiled Object files
 *.slo
 *.lo
