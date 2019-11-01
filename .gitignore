@@ -4,7 +4,7 @@
 /build
 /build*
 #Cmake.user
-CMakeLists.txt*
+CMakeLists.txt.*
 # Compiled Object files
 *.slo
 *.lo
