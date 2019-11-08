@@ -16,6 +16,9 @@ addons:
 #    - libsdl2-dev
 
 install:
+  - wget https://www.libsdl.org/release/SDL2-2.0.10.tar.gz -O sdl2.tar.gz
+  - tar xzf sdl2.tar.gz
+  - pushd SDL2-* && ./configure && make && sudo make install && popd
   # this install step will take care of deploying a newer cmake version
   # first we create a directory for the CMake binaries
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
