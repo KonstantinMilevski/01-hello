@@ -1,1 +1,1 @@
-[![Build Status](https://travis-ci.org/KonstantinMilevski/01-hello.svg?branch=master)](https://travis-ci.org/KonstantinMilevski/01-hello)
+[![Build Status](https://travis-ci.org/KonstantinMilevski/study.svg?branch=master)](https://travis-ci.org/KonstantinMilevski/study)
