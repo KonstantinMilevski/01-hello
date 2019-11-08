@@ -1,5 +1,0 @@
-# ninja log v5
-0	307	1572612088341803564	CMakeFiles/hello-lib-static.dir/src/print.cpp.o	a84671dbbd04b7aa
-0	307	1572612088341803564	CMakeFiles/hello-lib-dynamic.dir/src/print.cpp.o	e83d79e81a8fb521
-307	313	1572612088348803594	libhello-lib-static.a	12d42ad80b3f12cd
-307	376	1572612088409803857	libhello-lib-dynamic.so	62db7ec7d0086939
