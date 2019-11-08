@@ -12,8 +12,8 @@ addons:
 addons:
   apt:
     packages:
-    - libsdl2-2.0-0
-    - libsdl2-dev
+#    - libsdl2-2.0-0
+#    - libsdl2-dev
 
 install:
   # this install step will take care of deploying a newer cmake version
@@ -39,6 +39,10 @@ install:
   - make deps
   #-git fetch --unshallow
 
+  # Install SDL2
+  - sudo apt-get install build-essential mercurial make autoconf automake libtool libgles2-mesa-dev libasound2-dev libpulse-dev libaudio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev libxxf86vm-dev libxss-dev libgl1-mesa-dev
+  - sudo apt-get install libsndifsdl2-dev libsdl2-ttf-dev libsdl2-net-dev libsdl2-mixer-dev libsdl2-image-dev libsdl2-gfx-dev games-c++-dev libpjproject-dev
+  - sudo apt-get install libsdl2-dev
 script:
   - export CC=gcc-9
   - export CXX=g++-9
