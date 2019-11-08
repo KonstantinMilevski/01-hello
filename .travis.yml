@@ -37,12 +37,16 @@ install:
   - export PATH="$HOME/.cargo/bin:$PATH"
   - cmake .
   - make deps
-  -git fetch --unshallow
+  #-git fetch --unshallow
 
 script:
   - export CC=gcc-9
   - export CXX=g++-9
   - cmake --version
-  - cmake .
-  - cmake  --build
-  - ctect .
+  - BIN_DIR="${TRAVIS_BUILD_DIR}/bin"
+  - mkdir ${BIN_DIR} && cd ${BIN_DIR}
+  - echo $PWD
+  - cmake ..
+  - echo $PWD
+  - cmake --build ..
+  #- ctect .
