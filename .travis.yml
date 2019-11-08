@@ -1,30 +1,25 @@
-dist: trusty
-sudo: require
-
 language: cpp
 compiler: gcc
+- os: linux
+      name: "Xenial - gcc 9"
+      dist: xenial
+      env: [USE_CC='/usr/bin/gcc-9', USE_CXX='/usr/bin/g++-9']
+      addons:
+        apt:
+          packages: ['gcc-9', 'g++-9', 'cmake']
+          sources: ['ubuntu-toolchain-r-test']
 
-os: linux
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-7
-      - g++-7
-      - ninja-build
-env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 before_install:
-    - eval "${MATRIX_EVAL}"
-script:
-    - sudo ln -s /usr/bin/gcc-7 /usr/local/bin/gcc
-    - sudo ln -s /usr/bin/g++-7 /usr/local/bin/g++
-    - gcc -v && g++ -v
+  # Override compilers set by Travis
+  - if [ ! -z "${USE_CC}" ]; then echo "Override CC=${USE_CC}"; eval "CC=${USE_CC}"; fi
+  - if [ ! -z "${USE_CXX}" ]; then echo "Override CXX=${USE_CXX}"; eval "CXX=${USE_CXX}"; fi
+  - echo ${CC} && ${CC} --version
+  - echo ${CXX} && ${CXX} --version
+
 install:
-  - wget https://www.libsdl.org/release/SDL2-2.0.10.tar.gz -O sdl2.tar.gz
-  - tar xzf sdl2.tar.gz
-  - pushd SDL2-* && ./configure && make && sudo make install && popd
+  #- wget https://www.libsdl.org/release/SDL2-2.0.10.tar.gz -O sdl2.tar.gz
+  #- tar xzf sdl2.tar.gz
+  #- pushd SDL2-* && ./configure && make && sudo make install && popd
   # this install step will take care of deploying a newer cmake version
   # first we create a directory for the CMake binaries
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
