@@ -34,9 +34,9 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
 
   # Install other dependencies
-  - export PATH="$HOME/.cargo/bin:$PATH"
-  - cmake .
-  - make deps
+  #- export PATH="$HOME/.cargo/bin:$PATH"
+  #- cmake .
+  #- make deps
   #-git fetch --unshallow
 
   # Install SDL2
