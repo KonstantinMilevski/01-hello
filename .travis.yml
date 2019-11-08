@@ -47,6 +47,7 @@ script:
   - export CC=gcc-9
   - export CXX=g++-9
   - cmake --version
+  - gcc --version
   - BIN_DIR="${TRAVIS_BUILD_DIR}/bin"
   - mkdir ${BIN_DIR} && cd ${BIN_DIR}
   - echo $PWD
