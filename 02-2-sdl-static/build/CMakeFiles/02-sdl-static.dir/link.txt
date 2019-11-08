@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/02-sdl-static.dir/main.cxx.o  -o 02-sdl-static  /usr/local/lib/libSDL2.a -lm -ldl -lpthread -lrt 

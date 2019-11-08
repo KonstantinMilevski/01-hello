@@ -1,7 +1,0 @@
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/install/strip.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/install/local.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/02-sdl-static-debug.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/edit_cache.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/rebuild_cache.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/install.dir
-/home/MIk/prct/study/02-2-sdl-static-debug/build/CMakeFiles/list_install_components.dir

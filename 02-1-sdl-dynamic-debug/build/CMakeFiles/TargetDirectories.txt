@@ -1,3 +1,0 @@
-/home/MIk/prct/study/02-1-sdl-dynamic-debug/build/CMakeFiles/rebuild_cache.dir
-/home/MIk/prct/study/02-1-sdl-dynamic-debug/build/CMakeFiles/edit_cache.dir
-/home/MIk/prct/study/02-1-sdl-dynamic-debug/build/CMakeFiles/02-1-sdl-dynamic-debug.dir
