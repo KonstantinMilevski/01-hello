@@ -1,0 +1,4 @@
+#ifndef 01_LINE_RENDER_HXX
+#define 01_LINE_RENDER_HXX
+
+#endif // 01_LINE_RENDER_HXX
