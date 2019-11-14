@@ -1,5 +1,7 @@
 #include "00_canvas.hxx"
 
+irender::~irender() {}
+
 bool operator==(const color& first, const color& second)
 {
     return (first.r == second.r && first.g == second.g && first.b == second.b);

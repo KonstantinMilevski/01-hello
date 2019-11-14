@@ -9,8 +9,8 @@
 #include <iostream>
 #include <vector>
 
-constexpr size_t width  = 3;
-constexpr size_t height = 4;
+constexpr size_t width  = 320;
+constexpr size_t height = 240;
 
 #pragma pack(push, 1)
 struct color
@@ -26,10 +26,11 @@ struct position
 {
     int32_t x;
     int32_t y;
+    double  length() { return std::sqrt(x * x + y * y); }
 };
 position operator-(const position&, const position&);
 
-using pixels_vector = std::vector<position>;
+using pixels = std::vector<position>;
 
 const size_t buffer_size = height * width;
 
@@ -72,8 +73,9 @@ struct canvas : std::array<color, buffer_size>
 };
 struct irender
 {
-    virtual void          clear(color)                                   = 0;
-    virtual void          set_pixel(position, color)                     = 0;
-    virtual pixels_vector pixel_position(position& start, position& end) = 0;
+    virtual void   clear(const color&)                                = 0;
+    virtual void   set_pixel(const position&, const color&)           = 0;
+    virtual pixels pixels_positions(const position&, const position&) = 0;
+
     virtual ~irender();
 };
