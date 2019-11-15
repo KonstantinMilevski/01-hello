@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     triangle_indexed_render indexed_render(image, width, height);
     indexed_render.clear(black);
 
-    indexed_render.draw_triangle(triangles_for_index, indexes, green);
+    indexed_render.draw_empty_triangle(triangles_for_index, indexes, green);
 
     image.save_image("04_triangles_indexes.ppm");
 

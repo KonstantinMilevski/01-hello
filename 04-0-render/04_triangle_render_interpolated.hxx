@@ -14,8 +14,9 @@ struct vertex
     double f7 = 0; /// ?
 };
 
-double interpolate(const double&, const double&, const double&);
-vertex interpolate(const vertex&, const vertex&, const double&);
+const double        interpolate(const double&, const double&, const double&);
+vertex              interpolate(const vertex&, const vertex&, const double&);
+std::vector<vertex> points_on_side(const vertex&, const vertex&);
 
 struct uniforms
 {
@@ -41,12 +42,17 @@ struct triangle_interpolated : triangle_indexed_render
 {
     triangle_interpolated(canvas& buffer, size_t width, size_t height);
     void set_gfx_program(gfx_program& program) { program_ = &program; }
-    void draw_triangles(std::vector<vertex>&  vertexes,
-                        std::vector<uint8_t>& indexes);
+    void draw_filled_triangle(std::vector<vertex>&  vertexes,
+                              std::vector<uint8_t>& indexes);
+    void draw_empty_triangle(std::vector<vertex>&  vertexes,
+                             std::vector<uint8_t>& indexes);
 
 private:
     std::vector<vertex> rasterize_triangle(const vertex& v0, const vertex& v1,
                                            const vertex& v2);
+    std::vector<vertex> rasterize_empty_triangle(const vertex& v0,
+                                                 const vertex& v1,
+                                                 const vertex& v2);
     std::vector<vertex> raster_horizontal_triangle(const vertex& single,
                                                    const vertex& left,
                                                    const vertex& right);

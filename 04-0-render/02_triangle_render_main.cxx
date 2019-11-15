@@ -15,7 +15,7 @@ int main()
     triangle.push_back(position{ width - 1, height - 1 });
     triangle.push_back(position{ 0, height - 1 });
 
-    render_tri.draw_triangle(triangle, 3, green);
+    render_tri.draw_empty_triangle(triangle, 3, green);
 
     image.save_image("02_triangle.ppm");
 
@@ -49,7 +49,7 @@ int main()
         }
     }
 
-    render_tri.draw_triangle(triangles, triangles.size(), green);
+    render_tri.draw_empty_triangle(triangles, triangles.size(), green);
 
     image.save_image("03_triangles.ppm");
 
@@ -68,7 +68,7 @@ int main()
     //    }
     //    //  }
     //    std::cout << triangle1.size() << std::endl;
-    //    render.draw_triangle(triangle1, triangle1.size(), green);
+    //    render.draw_empty_triangle(triangle1, triangle1.size(), green);
     // image.save_image("021_triangle.ppm");
 
     return 0;

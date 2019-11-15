@@ -30,8 +30,8 @@ pixels triangle_render::pixels_positions_triangle(const position& v1,
 
     return points_on_side;
 }
-void triangle_render::draw_triangle(const std::vector<position>& points,
-                                    const size_t& num, const color& col)
+void triangle_render::draw_empty_triangle(const std::vector<position>& points,
+                                          const size_t& num, const color& col)
 {
     pixels triangles_edge_pixels;
     for (int i = 0; i < num; i += 3)
