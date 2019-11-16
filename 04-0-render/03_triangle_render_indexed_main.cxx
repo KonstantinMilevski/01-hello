@@ -9,8 +9,8 @@ int main(int argc, char* argv[])
 
     std::vector<position> triangles_for_index;
 
-    size_t max_x = 3;
-    size_t max_y = 3;
+    size_t max_x = 2;
+    size_t max_y = 2;
 
     int32_t step_x = (width - 1) / max_x;
     int32_t step_y = (height - 1) / max_y;

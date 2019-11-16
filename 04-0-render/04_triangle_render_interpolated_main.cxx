@@ -52,17 +52,30 @@ int main(int argc, char* argv[])
 
      //                                 x    y   r  g  b   u    v   &
 //                                     f0   f1  f2 f3 f4  f5   f6
-    std::vector<vertex> triangle_v{ {   0,   0,  1, 0, 0,  0,   0,  0 },
-                                    {   0, 239,  0, 1, 0,  0,  239, 0 },
-                                    { 319, 239,  0, 0, 1, 319, 239, 0 } };
+    std::vector<vertex> triangle_v{ {   50,   50,  1, 1, 1,  0,   0,  0 },
+                                    {   50, 189,  1, 1, 1,  0,  239, 0 },
+                                    { 50, 189,  1, 1, 1, 319, 239, 0 } };
     // clang-format on
+
+    //////////////////////////////////////////////////////////
+    // std::vector<vertex> triangle_v;
+    // std::vector<uint8_t>  indexes_v;
+    // draw_triangle(2,2,triangle_v,indexes_v);
+    ////////////////////////////////////////////////////////////////////
     std::vector<uint8_t>  indexes_v{ 0, 1, 2 };
     std::vector<position> triangle_v_pos{ { 0, 0 }, { 0, 239 }, { 319, 239 } };
+    // interpolated_render.draw_filled_triangle(        triangle_v,
+    // indexes_v);//
 
-    // interpolated_render.draw_filled_triangle(triangle_v, indexes_v);
+    std::vector<vertex>  triangle_l;
+    std::vector<uint8_t> indexes_l;
+    draw_line({ 50, 50, 1, 1, 1, 0, 0, 0 }, { 150, 189, 1, 1, 1, 0, 239, 0 },
+              triangle_l, indexes_l);
+    interpolated_render.draw_filled_triangle(triangle_l, indexes_l);
 
     // interpolated_render.draw_empty_triangle(triangle_v, indexes_v);
-    // interpolated_render.draw_empty_triangle(triangle_v_pos, indexes_v,
+
+    // interpolated_render.draw_filled_triangle(triangle_v_pos, indexes_v,
     // white);
     image.save_image("05_interpolated.ppm");
 
@@ -81,8 +94,8 @@ int main(int argc, char* argv[])
     //                        double x     = out.f0;
     //                        double y     = out.f1;
     //                        out.f0       = x * std::cos(alpha) - y *
-    //               std::sin(alpha); out.f1       = x * std::sin(alpha) + y *
-    //               std::cos(alpha);
+    //               std::sin(alpha); out.f1       = x * std::sin(alpha) + y
+    //               * std::cos(alpha);
     //            */
     //            /*
     //            // scale into 3 times

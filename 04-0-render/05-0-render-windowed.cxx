@@ -35,7 +35,9 @@ int main(int, char**)
 
     const color black  = { 0, 0, 0 };
     const color whight = { 255, 255, 255 };
-    canvas      image;
+    const color green  = { 0, 255, 0 };
+
+    canvas image;
 
     triangle_interpolated interpolated_render(image, width, height);
     //////////////////
@@ -53,13 +55,25 @@ int main(int, char**)
         }
         vertex vertex_shader(const vertex& v_in) override
         {
+            ///
+
             vertex out = v_in;
 
-            double x = out.f0;
-            double y = out.f1;
+            //            double x = out.f0;
+            //            double y = out.f1;
 
-            out.f0 = x;
-            out.f1 = y;
+            //            out.f0 = x;
+            //            out.f1 = y;
+
+            double x  = v_in.f0;
+            double y  = v_in.f1;
+            double dx = x - mouse_x;
+            double dy = y - mouse_y;
+            if (dx * dx + dy * dy < radius * radius)
+            {
+                out.f0 = x * dx * 0, 01;
+                out.f1 = y * dy * 0, 01;
+            }
 
             return out;
         }
@@ -80,29 +94,37 @@ int main(int, char**)
                 // radius
                 // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
                 double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                out.r       = gray;
-                out.g       = gray;
-                out.b       = gray;
+                //                out.r       = gray;
+                //                out.g       = gray;
+                //                out.b       = gray;
+                out.r += 50;
+                out.g += 50;
+                out.b += 50;
             }
 
             return out;
         }
-    };
+    } program01;
     ///////////////////
-    program program01;
 
-    std::vector<vertex>  triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                    { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                    { 319, 239, 0, 0, 1, 319, 239, 0 } };
-    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
+    // clang-format off
 
-    void*     pixels = image.data();
-    const int depth  = sizeof(color) * 8;
-    const int pitch  = width * sizeof(color);
-    const int rmask  = 0x000000ff;
-    const int gmask  = 0x0000ff00;
-    const int bmask  = 0x00ff0000;
-    const int amask  = 0;
+
+     //                                 x    y   r  g  b   u    v   &
+//                                     f0   f1  f2 f3 f4  f5   f6
+    std::vector<vertex> triangle_v{ {   50,   50,  1, 0, 0,  0,   0,  0 },
+                                    {   50, 189,  0, 1,0,  0,  239, 0 },
+                                    { 279, 189,  0,0, 1, 319, 239, 0 } };
+    // clang-format on
+    std::vector<uint8_t>  indexes_v{ 0, 1, 2 };
+    std::vector<position> triangle_v_pos{ { 0, 0 }, { 0, 239 }, { 319, 239 } };
+    void*                 pixels = image.data();
+    const int             depth  = sizeof(color) * 8;
+    const int             pitch  = width * sizeof(color);
+    const int             rmask  = 0x000000ff;
+    const int             gmask  = 0x0000ff00;
+    const int             bmask  = 0x00ff0000;
+    const int             amask  = 0;
 
     interpolated_render.set_gfx_program(program01);
 
@@ -133,10 +155,14 @@ int main(int, char**)
             }
         }
 
-        interpolated_render.clear(whight);
+        interpolated_render.clear(black);
         program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
-
-        // interpolated_render.draw_empty_triangles(triangle_v, indexes_v);
+        std::vector<position> triangle_v_pos{ { 0, 0 },
+                                              { 0, 239 },
+                                              { 319, 239 } };
+        //        interpolated_render.triangle_indexed_render::draw_empty_triangle(
+        //            triangle_v_pos, indexes_v, whight);
+        interpolated_render.draw_filled_triangle(triangle_v, indexes_v);
 
         SDL_Surface* bitmapSurface = SDL_CreateRGBSurfaceFrom(
             pixels, width, height, depth, pitch, rmask, gmask, bmask, amask);
