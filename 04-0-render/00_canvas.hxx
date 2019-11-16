@@ -29,6 +29,7 @@ struct position
     double  length() { return std::sqrt(x * x + y * y); }
 };
 position operator-(const position&, const position&);
+bool     operator==(const position&, const position&);
 
 using pixels = std::vector<position>;
 

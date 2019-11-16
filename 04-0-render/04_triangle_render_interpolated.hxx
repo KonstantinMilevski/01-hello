@@ -17,9 +17,6 @@ struct vertex
 const double interpolate(const double&, const double&, const double&);
 vertex       interpolate(const vertex&, const vertex&, const double&);
 
-void draw_line(const vertex& first, const vertex& second,
-               std::vector<vertex>& tops, std::vector<uint8_t>& indexes);
-
 struct uniforms
 {
     double f0 = 0;
@@ -46,6 +43,9 @@ struct triangle_interpolated : triangle_indexed_render
     void set_gfx_program(gfx_program& program) { program_ = &program; }
     void draw_filled_triangle(std::vector<vertex>&  vertexes,
                               std::vector<uint8_t>& indexes);
+    void build_line(const vertex& first, const vertex& second);
+    void print_line(const vertex& first, const vertex& second);
+    void draw_empty_tri_(const vertex& f, const vertex& sec, const vertex& th);
 
 private:
     std::vector<vertex> rasterize_triangle(const vertex& v0, const vertex& v1,

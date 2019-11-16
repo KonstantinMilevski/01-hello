@@ -19,6 +19,12 @@ void line_render::set_pixel(const position& point, const color& c)
 {
     const size_t index =
         static_cast<size_t>(point.y) * w + static_cast<size_t>(point.x);
+    if (index >= buffer_size)
+    {
+        // just skip incorrect pixels out of border
+        // set breakpoit here to find out
+        return;
+    }
     color& col = buffer_.at(index);
     col        = c;
 }

@@ -80,25 +80,77 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
               [](const vertex* left, const vertex* right) {
                   return (left->f1 < right->f1);
               });
-    const vertex&         top    = *in_vertexes.at(0);
-    const vertex&         middle = *in_vertexes.at(1);
-    const vertex&         bottom = *in_vertexes.at(2);
-    position              start{ static_cast<int32_t>(std::round(top.f0)),
+    const vertex& top    = *in_vertexes.at(0);
+    const vertex& middle = *in_vertexes.at(1);
+    const vertex& bottom = *in_vertexes.at(2);
+    // first and last vertex will be longest triangle side
+    // we need to find middle point on longest triangle side with same Y
+    // coordinate like in middle vertex after sort
+    position start{ static_cast<int32_t>(std::round(top.f0)),
                     static_cast<int32_t>(std::round(top.f1)) };
-    position              end{ static_cast<int32_t>(std::round(bottom.f0)),
+    position end{ static_cast<int32_t>(std::round(bottom.f0)),
                   static_cast<int32_t>(std::round(bottom.f1)) };
-    std::vector<position> long_side_point = pixels_positions(start, end);
+    position middle_pos{ static_cast<int32_t>(std::round(middle.f0)),
+                         static_cast<int32_t>(std::round(middle.f1)) };
 
-    auto it_middle = std::find_if(
-        begin(long_side_point), std::end(long_side_point),
-        [&](const position& pos) {
-            return pos.y == static_cast<int32_t>(std::round(middle.f1));
-        });
-    assert(it_middle != std::end(long_side_point));
+    // Here 3 quik and durty HACK if triangle consist from same points
+    if (start == end)
+    {
+        // just render line start -> middle
 
-    const position second_middle = *it_middle;
+        position delta        = start - middle_pos;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, middle, t);
+            out.push_back(vertex);
+        }
 
-    double t = (second_middle - start).length() / (end - start).length();
+        return out;
+    }
+
+    if (start == middle_pos)
+    {
+        // just render line start -> middle
+
+        position delta        = start - end;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, bottom, t);
+            out.push_back(vertex);
+        }
+
+        return out;
+    }
+
+    if (end == middle_pos)
+    {
+        // just render line start -> middle
+
+        position delta        = start - middle_pos;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, middle, t);
+            out.push_back(vertex);
+        }
+
+        return out;
+    }
+
+    /// find middle
+    double       t{ 0.0 };
+    const double length_top_bottom =
+        std::sqrt((top.f0 - bottom.f0) * (top.f0 - bottom.f0) +
+                  (top.f1 - bottom.f1) * (top.f1 - bottom.f1));
+
+    const double length_bottom_middle =
+        length_top_bottom * (top.f1 - middle.f1) / (top.f1 - bottom.f1);
+    t = length_bottom_middle / length_top_bottom;
 
     vertex second_middle_vertex = interpolate(top, bottom, t);
 
@@ -113,7 +165,7 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
 
     return out;
 }
-//+
+
 void triangle_interpolated::draw_filled_triangle(std::vector<vertex>&  vertexes,
                                                  std::vector<uint8_t>& indexes)
 {
@@ -135,6 +187,7 @@ void triangle_interpolated::draw_filled_triangle(std::vector<vertex>&  vertexes,
                                                                    v2_) };
         for (const vertex& interpolated_vertex : interpoleted)
         {
+
             const color    c = program_->fragment_shader(interpolated_vertex);
             const position pos{
                 static_cast<int32_t>(std::round(interpolated_vertex.f0)),
@@ -145,13 +198,82 @@ void triangle_interpolated::draw_filled_triangle(std::vector<vertex>&  vertexes,
     }
 }
 
-void draw_line(const vertex& first, const vertex& second,
-               std::vector<vertex>& tops, std::vector<uint8_t>& indexes)
+void triangle_interpolated::draw_empty_tri_(const vertex& f, const vertex& sec,
+                                            const vertex& th)
 {
+    std::vector<vertex>  tops = { f, sec, sec, sec, th, th, f, th, th };
+    std::vector<uint8_t> indexes;
 
-    vertex third = second;
-    tops.push_back(first);
-    tops.push_back(second);
-    tops.push_back(third);
-    indexes = { 0, 1, 2 };
+    for (int i = 0; i < 9; i++)
+    {
+        indexes.push_back(static_cast<uint8_t>(i));
+    }
+    draw_filled_triangle(tops, indexes);
+
+    //    // first tri
+    //    vertex v01 = f;
+    //    vertex v02 = sec;
+    //    vertex v03 = v02;
+
+    //    // sec tri
+    //    vertex v04 = sec;
+    //    vertex v05 = th;
+    //    vertex v06 = th;
+    //    // third tri
+    //    vertex v07 = f;
+    //    vertex v08 = th;
+    //    vertex v09 = th;
+}
+void triangle_interpolated::build_line(const vertex& first,
+                                       const vertex& second)
+
+{
+    std::vector<vertex>  tops;
+    std::vector<uint8_t> indexes{ 0, 1, 2 };
+
+    tops = { first, second, second };
+
+    draw_filled_triangle(tops, indexes);
+}
+
+void triangle_interpolated::print_line(const vertex& first,
+                                       const vertex& second)
+{
+    using namespace std;
+
+    vector<vertex> out;
+
+    const vertex& v0 = first;
+    const vertex& v1 = second;
+
+    const vertex v0_ = program_->vertex_shader(v0);
+    const vertex v1_ = program_->vertex_shader(v1);
+
+    size_t num_pixel_in_line = static_cast<size_t>(
+        std::round(std::sqrt((first.f1 - second.f1) * (first.f1 - second.f1) +
+                             (first.f0 - second.f0) * (first.f0 - second.f0))));
+    if (num_pixel_in_line > 0)
+    {
+        for (size_t p = 0; p <= num_pixel_in_line + 1; ++p)
+        {
+            double t_index = static_cast<double>(p) / (num_pixel_in_line + 1);
+            vertex pixel   = interpolate(first, second, t_index);
+            out.push_back(pixel);
+        }
+    }
+    else
+    {
+        out.push_back(first);
+    }
+
+    for (const vertex& interpolated_vertex : out)
+    {
+        const color c = program_->fragment_shader(interpolated_vertex);
+        //  const color    c = { 0, 0, 255 };
+        const position pos{
+            static_cast<int32_t>(std::round(interpolated_vertex.f0)),
+            static_cast<int32_t>(std::round(interpolated_vertex.f1))
+        };
+        line_render::set_pixel(pos, c);
+    }
 }
