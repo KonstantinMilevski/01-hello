@@ -67,9 +67,9 @@ int main(int, char**)
             {
                 out.f0 = x + dx;
                 out.f1 = y + dy;
-                out.f2 = 0;
+                out.f2 = 255;
                 out.f3 = 0;
-                out.f4 = 255;
+                out.f4 = 0;
             }
 
             return out;
@@ -154,30 +154,54 @@ int main(int, char**)
         program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
 
         //interpolated_render.draw_filled_triangle(triangle_v, indexes_v);
+
     size_t max_x = 8;
     size_t max_y = 8;
 
-    int32_t step_x = (width -20) / max_x;
+    int32_t step_x = (width -40) / max_x;
     int32_t step_y = (height -20) / max_y;
 
     int32_t last_x=step_x*max_x;
     int32_t last_y=step_y*max_y;
 
+//    for (size_t x = 0; x <= last_x; x = x + step_x)
+//    {
+//        vertex v0{ static_cast<double>(x+10), 10, 0, 1, 0, 0, 0, 0 };
+//        vertex v1{static_cast<double>( x+10), static_cast<double>(last_y+10), 0, 1, 0, 0, 0, 0 };
+//        interpolated_render.build_line(v0, v1);
+
+//    }
+//    for (size_t y = 0; y <= last_y; y = y + step_y)
+//    {
+//        vertex v0{ 10, static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
+//        vertex v1{ (last_x+10), static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
+//         interpolated_render.build_line(v0, v1);
+//        //interpolated_render.print_line(v0, v1);
+//    }
+
+
+for (size_t y = 0; y <= last_y; y = y + step_y)
+{
     for (size_t x = 0; x <= last_x; x = x + step_x)
     {
-        vertex v0{ static_cast<double>(x+10), 10, 0, 1, 0, 0, 0, 0 };
-        vertex v1{static_cast<double>( x+10), static_cast<double>(last_y+10), 0, 1, 0, 0, 0, 0 };
+        vertex v0{ static_cast<double>(x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
+        vertex v1{static_cast<double>(x), static_cast<double>(y+step_y), 0, 1, 0, 0, 0, 0 };
         interpolated_render.build_line(v0, v1);
 
     }
-    for (size_t y = 0; y <= last_y; y = y + step_y)
-    {
-        vertex v0{ 10, static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
-        vertex v1{ (last_x+10), static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
-         interpolated_render.build_line(v0, v1);
-        //interpolated_render.print_line(v0, v1);
-    }
+}
+//size_t x = 0;
+for (size_t x = 0; x <= last_x; x = x + step_x)
+{
 
+for (size_t y = 0; y <= last_y; y = y + step_y)
+
+    {
+        vertex v0{ static_cast<double>(x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
+        vertex v1{ static_cast<double>(step_x+x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
+         interpolated_render.build_line(v0, v1);
+    }
+}
 
         SDL_Surface* bitmapSurface = SDL_CreateRGBSurfaceFrom(
             pixels, width, height, depth, pitch, rmask, gmask, bmask, amask);
