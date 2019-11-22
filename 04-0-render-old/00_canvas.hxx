@@ -9,8 +9,8 @@
 #include <iostream>
 #include <vector>
 
-constexpr size_t width  = 320;
-constexpr size_t height = 240;
+constexpr size_t width  = 640;
+constexpr size_t height = 480;
 
 #pragma pack(push, 1)
 struct color

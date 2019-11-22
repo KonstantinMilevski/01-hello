@@ -1,4 +1,4 @@
-#include "04_triangle_render_interpolated.hxx"
+#include "interpolateded_triangle_render.hxx"
 
 #include <SDL.h>
 
@@ -7,8 +7,11 @@
 
 int main(int, char**)
 {
-
     using namespace std;
+    const size_t  max_x  = 12;
+    const size_t  max_y  = 16;
+    const int32_t step_x = (width - 1) / max_x;
+    const int32_t step_y = (height - 1) / max_y;
 
     if (0 != SDL_Init(SDL_INIT_EVERYTHING))
     {
@@ -17,8 +20,8 @@ int main(int, char**)
     }
 
     SDL_Window* window = SDL_CreateWindow(
-        "runtime soft render", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        width, height, SDL_WINDOW_OPENGL);
+        "runtime soft render_mk", SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
     if (window == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -33,14 +36,12 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black  = { 0, 0, 0 };
-    const color whight = { 255, 255, 255 };
-    const color green  = { 0, 255, 0 };
+    const color black = { 0, 0, 0 };
 
     canvas image;
 
-    triangle_interpolated interpolated_render(image, width, height);
-    //////////////////
+    interpolateded_triangle_render interpolated_render(image, width, height);
+
     struct program : gfx_program
     {
         double mouse_x{};
@@ -55,22 +56,47 @@ int main(int, char**)
         }
         vertex vertex_shader(const vertex& v_in) override
         {
-            ///
-
             vertex out = v_in;
+
+            //            double x = out.f0;
+            //            double y = out.f1;
+
+            //            out.f0 = x;
+            //            out.f1 = y;
+
+            ////
 
             double x  = v_in.f0;
             double y  = v_in.f1;
-            double dx = x - mouse_x;
-            double dy = y - mouse_y;
+            double dx = (x - mouse_x);
+            double dy = (y - mouse_y);
             if (dx * dx + dy * dy < radius * radius)
             {
-                out.f0 = x + dx;
-                out.f1 = y + dy;
-                out.f2 = 255;
+
+                double length = std::sqrt(dx * dx + dy * dy);
+                if (0 != length)
+                {
+                    // find position on circle = radius
+                    double radius_x = mouse_x + radius * dx / length;
+                    double radius_y = mouse_y + radius * dy / length;
+
+                    out.f0 = (x + radius_x) / 2;
+                    out.f1 = (y + radius_y) / 2;
+                }
+
+                out.f2 = 180;
                 out.f3 = 0;
                 out.f4 = 0;
             }
+            // check out of buffer_size
+            if (out.f1 >= max_y * step_y - 1)
+                out.f1 = max_y * step_y;
+            if (out.f0 >= max_x * step_x)
+                out.f0 = max_x * step_x - 1;
+            if (out.f1 < 0)
+                out.f1 = 0;
+            if (out.f0 < 0)
+                out.f0 = 0;
 
             return out;
         }
@@ -85,33 +111,31 @@ int main(int, char**)
             double y  = v_in.f1;
             double dx = mouse_x - x;
             double dy = mouse_y - y;
-            if (dx * dx + dy * dy < radius * radius)
+            if (dx * dx + dy * dy == radius * radius)
             {
                 // make pixel gray if mouse cursor around current pixel with
                 // radius
                 // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
                 double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                out.r       = gray;
-                out.g       = gray;
-                out.b       = gray;
+                //                out.r       = gray;
+                //                out.g       = gray;
+                //                out.b       = gray;
+                // out = { 0, 255, 0 };
             }
 
             return out;
         }
     } program01;
-    ///////////////////
 
-    // clang-format off
+    //    std::vector<vertex>  triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
+    //                                    { 0, 239, 0, 1, 0, 0, 239, 0 },
+    //                                    { 319, 239, 0, 0, 1, 319, 239, 0 } };
+    //    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
 
+    std::vector<vertex>  triangle_v;
+    std::vector<uint8_t> indexes_v;
 
-     //                                 x    y   r  g  b   u    v   &
-//                                     f0   f1  f2 f3 f4  f5   f6
-//    std::vector<vertex> triangle_v{ {   50,   50,  1, 0, 0,  0,   0,  0 },
-//                                    {   50, 189,  0, 1,0,  0,  239, 0 },
-//                                    { 279, 189,  0,0, 1, 319, 239, 0 } };
-//    // clang-format on
-//    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
-
+    draw_cells(max_x, max_y, triangle_v, indexes_v);
 
     void*     pixels = image.data();
     const int depth  = sizeof(color) * 8;
@@ -125,7 +149,7 @@ int main(int, char**)
 
     double mouse_x{};
     double mouse_y{};
-    double radius{ 20.0 }; // 20 pixels radius
+    double radius = { 30 }; // 20 pixels radius
 
     bool continue_loop = true;
 
@@ -153,55 +177,7 @@ int main(int, char**)
         interpolated_render.clear(black);
         program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
 
-        //interpolated_render.draw_filled_triangle(triangle_v, indexes_v);
-
-    size_t max_x = 8;
-    size_t max_y = 8;
-
-    int32_t step_x = (width -40) / max_x;
-    int32_t step_y = (height -20) / max_y;
-
-    int32_t last_x=step_x*max_x;
-    int32_t last_y=step_y*max_y;
-
-//    for (size_t x = 0; x <= last_x; x = x + step_x)
-//    {
-//        vertex v0{ static_cast<double>(x+10), 10, 0, 1, 0, 0, 0, 0 };
-//        vertex v1{static_cast<double>( x+10), static_cast<double>(last_y+10), 0, 1, 0, 0, 0, 0 };
-//        interpolated_render.build_line(v0, v1);
-
-//    }
-//    for (size_t y = 0; y <= last_y; y = y + step_y)
-//    {
-//        vertex v0{ 10, static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
-//        vertex v1{ (last_x+10), static_cast<double>(y+10), 0, 1, 0, 0, 0, 0 };
-//         interpolated_render.build_line(v0, v1);
-//        //interpolated_render.print_line(v0, v1);
-//    }
-
-
-for (size_t y = 0; y <= last_y; y = y + step_y)
-{
-    for (size_t x = 0; x <= last_x; x = x + step_x)
-    {
-        vertex v0{ static_cast<double>(x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
-        vertex v1{static_cast<double>(x), static_cast<double>(y+step_y), 0, 1, 0, 0, 0, 0 };
-        interpolated_render.build_line(v0, v1);
-
-    }
-}
-//size_t x = 0;
-for (size_t x = 0; x <= last_x; x = x + step_x)
-{
-
-for (size_t y = 0; y <= last_y; y = y + step_y)
-
-    {
-        vertex v0{ static_cast<double>(x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
-        vertex v1{ static_cast<double>(step_x+x), static_cast<double>(y), 0, 1, 0, 0, 0, 0 };
-         interpolated_render.build_line(v0, v1);
-    }
-}
+        interpolated_render.draw_interpolated_triangle(triangle_v, indexes_v);
 
         SDL_Surface* bitmapSurface = SDL_CreateRGBSurfaceFrom(
             pixels, width, height, depth, pitch, rmask, gmask, bmask, amask);
@@ -230,5 +206,6 @@ for (size_t y = 0; y <= last_y; y = y + step_y)
     SDL_DestroyWindow(window);
 
     SDL_Quit();
+
     return EXIT_SUCCESS;
 }

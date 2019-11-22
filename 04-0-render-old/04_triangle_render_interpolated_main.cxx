@@ -59,21 +59,20 @@ int main(int argc, char* argv[])
         {
             vertex out = v_in;
 
-            //            // rotate
-            //            double alpha = 3.14159 / 6; // 30 degree
-            //            double x     = out.f0;
-            //            double y     = out.f1;
-            //            out.f0       = x * std::cos(alpha) - y *
-            //            std::sin(alpha); out.f1       = x * std::sin(alpha) +
-            //            y * std::cos(alpha);
+            // rotate
+            double alpha = 3.14159 / 6; // 30 degree
+            double x     = out.f0;
+            double y     = out.f1;
+            out.f0       = x * std::cos(alpha) - y * std::sin(alpha);
+            out.f1       = x * std::sin(alpha) + y * std::cos(alpha);
 
-            //            // scale into 3 times
-            //            out.f0 *= 0.3;
-            //            out.f1 *= 0.3;
+            // scale into 3 times
+            out.f0 *= 0.3;
+            out.f1 *= 0.3;
 
-            //            // move
-            //            out.f0 += (width / 2);
-            //            out.f1 += (height / 2);
+            // move
+            out.f0 += (width / 2);
+            out.f1 += (height / 2);
 
             return out;
         }
@@ -103,29 +102,30 @@ std::vector<uint8_t> indexes_v {0,1,2};
     std::vector<vertex>  triangle_l;
     std::vector<uint8_t> indexes_l;
 
-    size_t max_x = 8;
-    size_t max_y = 8;
+    //    size_t max_x = 8;
+    //    size_t max_y = 8;
 
-    int32_t step_x = (width - 1) / max_x;
-    int32_t step_y = (height - 1) / max_y;
+    //    int32_t step_x = (width - 1) / max_x;
+    //    int32_t step_y = (height - 1) / max_y;
 
-    for (size_t x = 0; x <= width; x = x + step_x)
-    {
-        vertex v0{ x, 0, 0, 0, 1, 0, 0, 0 };
-        vertex v1{ x, (height - 1), 1, 0, 0, 0, 0, 0 };
-        interpolated_render.build_line(v0, v1);
-        //  interpolated_render.print_line(v0, v1);
-    }
-    for (size_t y = 0; y <= height; y = y + step_y)
-    {
-        vertex v0{ 0, y, 0, 0, 1, 0, 0, 0 };
-        vertex v1{ (width - 1), y, 0, 0, 1, 0, 0, 0 };
-        interpolated_render.build_line(v0, v1);
-        // interpolated_render.print_line(v0, v1);
-    }
-    interpolated_render.draw_empty_tri_({ 50, 50, 0, 1, 0, 0, 0, 0 },
-                                        { 180, 90, 0, 0, 0, 0, 0, 0 },
-                                        { 50, 200, 0, 1, 0, 0, 0, 0 });
+    //    for (size_t x = 0; x <= width; x = x + step_x)
+    //    {
+    //        vertex v0{ x, 0, 0, 0, 1, 0, 0, 0 };
+    //        vertex v1{ x, (height - 1), 1, 0, 0, 0, 0, 0 };
+    //        interpolated_render.build_line(v0, v1);
+    //        //  interpolated_render.print_line(v0, v1);
+    //    }
+    //    for (size_t y = 0; y <= height; y = y + step_y)
+    //    {
+    //        vertex v0{ 0, y, 0, 0, 1, 0, 0, 0 };
+    //        vertex v1{ (width - 1), y, 0, 0, 1, 0, 0, 0 };
+    //        interpolated_render.build_line(v0, v1);
+    //        // interpolated_render.print_line(v0, v1);
+    //    }
+    //    interpolated_render.draw_empty_tri_({ 50, 50, 0, 1, 0, 0, 0, 0 },
+    //                                        { 180, 90, 0, 0, 0, 0, 0, 0 },
+    //                                        { 50, 200, 0, 1, 0, 0, 0, 0 });
+    interpolated_render.draw_filled_triangle(triangle_v, indexes_v);
     image.save_image("05_interpolated.ppm");
 
     // texture example
