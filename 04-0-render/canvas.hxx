@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-constexpr size_t width  = 320;
-constexpr size_t height = 240;
+constexpr size_t width  = 640;
+constexpr size_t height = 480;
 
 struct position
 {

@@ -66,22 +66,45 @@ int main(int, char**)
 
             ////
 
-            double x  = v_in.f0;
-            double y  = v_in.f1;
-            double dx = (x - mouse_x);
-            double dy = (y - mouse_y);
+            double x    = v_in.f0;
+            double y    = v_in.f1;
+            double dx   = (x - mouse_x);
+            double dy   = (y - mouse_y);
+            double diag = std::sqrt(step_x * step_x + step_y * step_y);
             if (dx * dx + dy * dy < radius * radius)
             {
 
-                double length = std::sqrt(dx * dx + dy * dy);
-                if (0 != length)
+                double length_v_m = std::sqrt(dx * dx + dy * dy);
+                if (radius > 0)
                 {
-                    // find position on circle = radius
-                    double radius_x = mouse_x + radius * dx / length;
-                    double radius_y = mouse_y + radius * dy / length;
+                    double radius_x  = mouse_x + radius * dx / length_v_m;
+                    double radius_y  = mouse_y + radius * dy / length_v_m;
+                    double radius_2x = mouse_x + radius * dx / (length_v_m * 2);
+                    double radius_2y = mouse_y + radius * dy / (length_v_m * 2);
+                    if (length_v_m != 0 && length_v_m < radius)
+                    {
+                        // find position on circle = radius
 
-                    out.f0 = (x + radius_x) / 2;
-                    out.f1 = (y + radius_y) / 2;
+                        out.f0 = (x + radius_x) / 2;
+                        out.f1 = (y + radius_y) / 2;
+                    }
+                    if (length_v_m != 0 && length_v_m < radius && radius < diag)
+
+                    {
+                        out.f0 = radius_2x;
+                        out.f1 = radius_2y;
+                    }
+                }
+                if (radius <= 0)
+                {
+                    double radius_x = mouse_x - radius * dx / length_v_m;
+                    double radius_y = mouse_y - radius * dy / length_v_m;
+                    double radius_2x =
+                        mouse_x - 1 / radius * dx / (length_v_m * 2);
+                    double radius_2y =
+                        mouse_y - 1 / radius * dy / (length_v_m * 2);
+                    out.f0 = mouse_x + (-x + radius_x) / 10;
+                    out.f1 = mouse_y + (-y + radius_y) / 10;
                 }
 
                 out.f2 = 180;
@@ -113,14 +136,18 @@ int main(int, char**)
             double dy = mouse_y - y;
             if (dx * dx + dy * dy == radius * radius)
             {
-                // make pixel gray if mouse cursor around current pixel with
-                // radius
-                // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
-                double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                //                out.r       = gray;
-                //                out.g       = gray;
-                //                out.b       = gray;
-                // out = { 0, 255, 0 };
+                if (radius > 0)
+                {
+                    // make pixel gray if mouse cursor around current pixel with
+                    // radius
+                    // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
+                    double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
+                    //                out.r       = gray;
+                    //                out.g       = gray;
+                    //                out.b       = gray;
+                }
+                if (radius < 0)
+                    out = { 0, 0, 255 };
             }
 
             return out;
@@ -129,7 +156,8 @@ int main(int, char**)
 
     //    std::vector<vertex>  triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
     //                                    { 0, 239, 0, 1, 0, 0, 239, 0 },
-    //                                    { 319, 239, 0, 0, 1, 319, 239, 0 } };
+    //                                    { 319, 239, 0, 0, 1, 319, 239, 0 }
+    //                                    };
     //    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
 
     std::vector<vertex>  triangle_v;
@@ -169,9 +197,14 @@ int main(int, char**)
                 mouse_y = e.motion.y;
             }
             else if (e.type == SDL_MOUSEWHEEL)
-            {
-                radius *= e.wheel.y;
-            }
+                if (e.wheel.y > 0) // scroll up
+                {
+                    radius += 1;
+                }
+                else if (e.wheel.y < 0) // scroll down
+                {
+                    radius -= 1;
+                }
         }
 
         interpolated_render.clear(black);

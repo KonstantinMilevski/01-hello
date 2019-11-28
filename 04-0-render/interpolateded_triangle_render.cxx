@@ -244,3 +244,4 @@ void draw_cells(const size_t& max_x, const size_t& max_y,
             }
         }
     }
+}
