@@ -203,13 +203,14 @@ public:
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         GL_CHECK();
         string_view fragment_source = R"(#version 330 core
+                                      precision mediump float;
                                       in vec4 v_position;
                                       in vec3 v_color;
                                       out vec4 FragColor;
                                       void main()
                                       {
                                           FragColor = vec4(v_color, 1.0);
-                                          /*
+
                                           if (v_position.z >= 0.0)
                                           {
                                             float light_green = 0.5 + v_position.z / 2.0;
@@ -219,7 +220,7 @@ public:
                                             float dark_green = 0.5 - (v_position.z / -2.0);
                                             FragColor = vec4(0.0, dark_green, 0.0, 1.0);
                                           }
-                                          */
+
                                       }
                                       )";
         source                      = fragment_source.data();
@@ -347,6 +348,8 @@ public:
             std::cerr << "Error linking program:\n" << infoLog.data();
             throw std::runtime_error("error");
         }
+
+        // glUniform4f(0, 0, 1, 1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK()
     }

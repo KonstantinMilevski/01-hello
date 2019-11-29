@@ -3,6 +3,7 @@
 #include <iosfwd>
 #include <string>
 #include <string_view>
+#include <vector>
 
 struct vertex
 {
@@ -40,9 +41,10 @@ class engine
 {
 public:
     ~engine();
-    virtual std::string initialize(std::string_view) = 0;
-    virtual void        uninitialize()               = 0;
-    virtual void        render_triangle(triangle&)   = 0;
-    virtual void        swap_buffer()                = 0;
-    virtual bool        read_input(int&)             = 0;
+    virtual std::string initialize(std::string_view)                     = 0;
+    virtual void        uninitialize()                                   = 0;
+    virtual void        render_triangle(triangle&)                       = 0;
+    virtual void        swap_buffer()                                    = 0;
+    virtual bool        read_input(int&)                                 = 0;
+    virtual void        render_two_triangles(const std::vector<vertex>&) = 0;
 };

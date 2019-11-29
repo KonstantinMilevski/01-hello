@@ -287,6 +287,7 @@ public:
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
                               &t.v[0]);
         GL_CHECK()
+        // first attribute - vertex
         glEnableVertexAttribArray(0);
         GL_CHECK()
         glValidateProgram(program_id_);
@@ -307,6 +308,34 @@ public:
             throw std::runtime_error("error");
         }
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        GL_CHECK()
+    }
+    void render_two_triangles(const std::vector<vertex>& v) override final
+    {
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &v[0]);
+        GL_CHECK()
+        // first attribute - vertex
+        glEnableVertexAttribArray(0);
+        GL_CHECK()
+        glValidateProgram(program_id_);
+        GL_CHECK()
+        // Check the validate status
+        GLint validate_status = 0;
+        glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
+        GL_CHECK()
+        if (validate_status == GL_FALSE)
+        {
+            GLint infoLen = 0;
+            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+            GL_CHECK()
+            std::vector<char> infoLog(static_cast<size_t>(infoLen));
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
+            GL_CHECK()
+            std::cerr << "Error linking program:\n" << infoLog.data();
+            throw std::runtime_error("error");
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, v.size());
         GL_CHECK()
     }
     void swap_buffer() override final
