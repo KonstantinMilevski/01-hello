@@ -58,6 +58,7 @@ std::istream& operator>>(std::istream& is, vertex& v)
 {
     is >> v.x;
     is >> v.y;
+    is >> v.z;
     return is;
 }
 std::istream& operator>>(std::istream& is, triangle& t)

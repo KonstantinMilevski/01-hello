@@ -1,11 +1,14 @@
 #include "engine.hxx"
-#include "SDL.h"
-#include "glad/glad.h"
+
 #include <cassert>
 #include <exception>
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+#include "SDL.h"
+#include "glad/glad.h"
+
 #define GL_CHECK()                                                             \
     {                                                                          \
         const int err = static_cast<int>(glGetError());                        \
@@ -34,18 +37,6 @@
         }                                                                      \
     }
 
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
-{
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
-    if (nullptr == gl_pointer)
-    {
-        throw std::runtime_error(std::string("can't load GL function") +
-                                 func_name);
-    }
-    result = reinterpret_cast<T>(gl_pointer);
-}
-
 std::ostream& operator<<(std::ostream& os, const SDL_version& v)
 {
     os << v.major << ':';
@@ -58,6 +49,12 @@ std::istream& operator>>(std::istream& is, vertex& v)
 {
     is >> v.x;
     is >> v.y;
+    is >> v.z;
+
+    is >> v.r;
+    is >> v.g;
+    is >> v.b;
+
     return is;
 }
 std::istream& operator>>(std::istream& is, triangle& t)
@@ -95,7 +92,7 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("window 04-2", SDL_WINDOWPOS_CENTERED,
+        window = SDL_CreateWindow("window 04-3", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, 640, 480,
                                   ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
@@ -104,6 +101,13 @@ public:
                  << endl;
             return serr.str();
         }
+
+        // RENDER_DOC//////// next code needed for RenderDoc to work
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_CORE);
+        // RENDER_DOC////////////////////////////////////////////////
 
         gl_context = SDL_GL_CreateContext(window);
         if (gl_context == nullptr)
@@ -114,7 +118,7 @@ public:
             return serr.str();
         }
 
-        int gl_major_ver = 2;
+        int gl_major_ver = 0;
 
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
@@ -133,21 +137,36 @@ public:
             return serr.str();
         }
 
-        if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
+        if (gladLoadGLLoader(SDL_GL_GetProcAddress) == 0)
         {
             std::cerr << "error: failed to initialize glad" << std::endl;
         }
 
+        // RENDER_DOC///////////////////////////////////////////
+        GLuint vertex_buffer = 0;
+        glGenBuffers(1, &vertex_buffer);
+        GL_CHECK()
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        GL_CHECK()
+        GLuint vertex_array_object = 0;
+        glGenVertexArrays(1, &vertex_array_object);
+        GL_CHECK()
+        glBindVertexArray(vertex_array_object);
+        GL_CHECK()
+        // RENDER_DOC///////////////////////////////////////////
+
         // create vertex shader
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         GL_CHECK();
-        string_view vertex_source = R"(
-                                    attribute vec3 a_position;
-                                    varying vec4 v_position;
-
+        string_view vertex_source = R"(#version 330 core
+                                    layout (location = 0) in vec3 a_position;
+                                    layout (location = 1) in vec3 a_color;
+                                    out vec4 v_position;
+                                    out vec3 v_color;
                                     void main()
                                     {
                                         v_position = vec4(a_position, 1.0);
+                                        v_color = a_color;
                                         gl_Position = v_position;
                                     }
                                     )";
@@ -183,22 +202,26 @@ public:
 
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         GL_CHECK();
-        string_view fragment_source = R"(
-                      varying vec4 v_position;
-
-                      void main()
-                      {
-                          if (v_position.z >= 0.0)
-                          {
-                              float light_green = 0.5 + v_position.z / 2.0;
-                              gl_FragColor = vec4(0.0, light_green, 0.0, 1.0);
-                          } else
-                          {
-                              float color = 0.5 - (v_position.z / -2.0);
-                              gl_FragColor = vec4(color, 0.0, 0.0, 1.0);
-                          }
-                      }
-                      )";
+        string_view fragment_source = R"(#version 330 core
+                                      in vec4 v_position;
+                                      in vec3 v_color;
+                                      out vec4 FragColor;
+                                      void main()
+                                      {
+                                          FragColor = vec4(v_color, 1.0);
+                                          /*
+                                          if (v_position.z >= 0.0)
+                                          {
+                                            float light_green = 0.5 + v_position.z / 2.0;
+                                            FragColor = vec4(0.0, light_green, 0.0, 1.0);
+                                          } else
+                                          {
+                                            float dark_green = 0.5 - (v_position.z / -2.0);
+                                            FragColor = vec4(0.0, dark_green, 0.0, 1.0);
+                                          }
+                                          */
+                                      }
+                                      )";
         source                      = fragment_source.data();
         glShaderSource(fragment_shader, 1, &source, nullptr);
         GL_CHECK();
@@ -239,11 +262,13 @@ public:
 
         glAttachShader(program_id_, vertex_shader);
         GL_CHECK()
-
         glAttachShader(program_id_, fragment_shader);
         GL_CHECK()
 
+        // bind attribute location
         glBindAttribLocation(program_id_, 0, "a_position");
+        GL_CHECK()
+        glBindAttribLocation(program_id_, 1, "a_color");
         GL_CHECK()
 
         glLinkProgram(program_id_);
@@ -283,11 +308,28 @@ public:
     void render_triangle(triangle& t) override final
     {
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0]);
+        // RENDER DOC addition ////////////////////
+        glBufferData(GL_ARRAY_BUFFER, sizeof(t), &t, GL_STATIC_DRAW);
         GL_CHECK()
         glEnableVertexAttribArray(0);
+
+        GLintptr position_attr_offset = 0;
         GL_CHECK()
+        //
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              reinterpret_cast<void*>(position_attr_offset));
+        GL_CHECK()
+        glEnableVertexAttribArray(1);
+        GL_CHECK()
+        //
+        GLintptr color_attr_offset = sizeof(float) * 3;
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              reinterpret_cast<void*>(color_attr_offset));
+        GL_CHECK()
+        //
+
         glValidateProgram(program_id_);
         GL_CHECK()
         // Check the validate status

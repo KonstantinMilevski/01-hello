@@ -9,10 +9,18 @@ struct vertex
     vertex()
         : x(0.0f)
         , y(0.0f)
+        , z(0.0f)
+        , r(0.0f)
+        , g(0.0f)
+        , b(0.0f)
     {
     }
     float x;
     float y;
+    float z;
+    float r;
+    float g;
+    float b;
 };
 
 struct triangle
