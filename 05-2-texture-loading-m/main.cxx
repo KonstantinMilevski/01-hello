@@ -37,11 +37,8 @@ int main()
         return EXIT_FAILURE;
     }
 
-    std::ifstream file("vertexes.txt");
+    std::ifstream file("vert_and_tex_coord.txt");
     assert(!!file);
-    triangle t1, t2, t3, t4;
-
-    file >> t1 >> t2 >> t3 >> t4;
 
     bool continue_loop = true;
     while (continue_loop)
@@ -60,17 +57,22 @@ int main()
             }
         }
 
-        float alpha = (std::sin(engine->get_time_from_init()) * 0.5f) + 0.5f;
+        // float    alpha = (std::sin(engine->get_time_from_init()) * 0.5f) +
+        // 0.5f;
+        triangle t1, t2;
 
+        file >> t1 >> t2;
         // triangle tr1 = blend(t1, t3, alpha);
-        triangle tr2 = blend(t2, t4, alpha);
+        // triangle tr2 = blend(t2, t4, alpha);
 
         // engine->render_triangle(tr1);
-        engine->render_triangle(tr2);
+        // engine->render_triangle(tr2);
+        engine->render_triangle(t1);
+        engine->render_triangle(t2);
 
         engine->swap_buffer();
     };
 
     engine->uninitialize();
-    return 0;
+    return EXIT_SUCCESS;
 }

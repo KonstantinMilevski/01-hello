@@ -1,6 +1,8 @@
 #include "engine.hxx"
 #include "SDL.h"
 #include "glad/glad.h"
+#include "picopng.hxx"
+
 #include <cassert>
 #include <exception>
 #include <iostream>
@@ -58,6 +60,8 @@ std::istream& operator>>(std::istream& is, vertex& v)
 {
     is >> v.x;
     is >> v.y;
+    is >> v.tx;
+    is >> v.ty;
 
     return is;
 }
@@ -96,7 +100,7 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("window 05-1", SDL_WINDOWPOS_CENTERED,
+        window = SDL_CreateWindow("window 05-2", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, 640, 480,
                                   ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
@@ -143,14 +147,15 @@ public:
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         GL_CHECK();
         string_view vertex_source = R"(
-                                    attribute vec2 a_position;
-
-
-                                    void main()
-                                    {
-                                      gl_Position = vec4(a_position,0.0, 1.0);
-                                    }
-                                    )";
+                                            attribute vec2 a_position;
+                                            attribute vec2 a_tex_coord;
+                                            varying vec2 v_tex_coord;
+                                            void main()
+                                            {
+                                                v_tex_coord = a_tex_coord;
+                                                gl_Position = vec4(a_position, 0.0, 1.0);
+                                            }
+                                            )";
         const char* source        = vertex_source.data();
         glShaderSource(vertex_shader, 1, &source, nullptr);
         GL_CHECK();
@@ -184,14 +189,13 @@ public:
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         GL_CHECK();
         string_view fragment_source = R"(
-                      varying vec4 v_position;
-
-                      void main()
-                      {
-
-                              gl_FragColor = vec4(0.9, 0.0, 0.0, 0.0);
-                      }
-                      )";
+                                                varying vec2 v_tex_coord;
+                                                uniform sampler2D s_texture;
+                                                void main()
+                                                {
+                                                    gl_FragColor = texture2D(s_texture, v_tex_coord);
+                                                }
+                                                )";
         source                      = fragment_source.data();
         glShaderSource(fragment_shader, 1, &source, nullptr);
         GL_CHECK();
@@ -222,7 +226,7 @@ public:
 
         // create program and attach vertex and fragment shaders
 
-        program_id_ = glCreateProgram();
+        GLuint program_id_ = glCreateProgram();
         GL_CHECK()
         if (0 == program_id_)
         {
@@ -232,7 +236,6 @@ public:
 
         glAttachShader(program_id_, vertex_shader);
         GL_CHECK()
-
         glAttachShader(program_id_, fragment_shader);
         GL_CHECK()
 
@@ -261,44 +264,69 @@ public:
         glUseProgram(program_id_);
         GL_CHECK()
 
-        glEnable(GL_DEPTH_TEST);
-        GL_CHECK()
+        /// add texture
+        int location = glGetUniformLocation(program_id_, "s_texture");
+        GL_CHECK();
+        assert(-1 != location);
+        int texture_unit = 0;
+        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        GL_CHECK();
+
+        if (!load_texture("tank.png"))
+        {
+            return "failed load texture\n";
+        }
+
+        // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
+        glUniform1i(location, 0 + texture_unit);
+        GL_CHECK();
+
+        glEnable(GL_BLEND);
+        GL_CHECK();
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK();
 
         return "";
     }
     void uninitialize() override final
     {
-        glDeleteProgram(program_id_);
+        // glDeleteProgram(program_id_);
         SDL_GL_DeleteContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
     void render_triangle(const triangle& t) override final
     {
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0]);
+        // vertex
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t.v[0].x);
         GL_CHECK()
         // first attribute - vertex
         glEnableVertexAttribArray(0);
         GL_CHECK()
-        glValidateProgram(program_id_);
-        GL_CHECK()
-        // Check the validate status
-        GLint validate_status = 0;
-        glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
-        GL_CHECK()
-        if (validate_status == GL_FALSE)
-        {
-            GLint infoLen = 0;
-            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            GL_CHECK()
-            std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-            GL_CHECK()
-            std::cerr << "Error linking program:\n" << infoLog.data();
-            throw std::runtime_error("error");
-        }
+        // texture
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t.v[0].tx);
+        GL_CHECK();
+        glEnableVertexAttribArray(1);
+        GL_CHECK();
+
+        //        glValidateProgram(program_id_);
+        //        GL_CHECK()
+        //        // Check the validate status
+        //        GLint validate_status = 0;
+        //        glGetProgramiv(program_id_, GL_VALIDATE_STATUS,
+        //        &validate_status); GL_CHECK() if (validate_status == GL_FALSE)
+        //        {
+        //            GLint infoLen = 0;
+        //            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+        //            GL_CHECK()
+        //            std::vector<char> infoLog(static_cast<size_t>(infoLen));
+        //            glGetProgramInfoLog(program_id_, infoLen, nullptr,
+        //            infoLog.data()); GL_CHECK() std::cerr << "Error linking
+        //            program :\n " << infoLog.data(); throw
+        //            std::runtime_error("error");
+        //        }
         glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK()
     }
@@ -335,10 +363,71 @@ public:
         return current_time;
     }
 
+    bool load_texture(std::string_view path) override final
+    {
+        std::vector<unsigned char> png_file_in_memory;
+        std::ifstream              ifs(path.data(), std::ios_base::binary);
+        if (!ifs)
+        {
+            return false;
+        }
+        ifs.seekg(0, std::ios_base::end);
+        size_t pos_in_file = static_cast<size_t>(ifs.tellg());
+        png_file_in_memory.resize(pos_in_file);
+        ifs.seekg(0, std::ios_base::beg);
+        if (!ifs)
+        {
+            return false;
+        }
+
+        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
+                 pos_in_file);
+        if (!ifs.good())
+        {
+            return false;
+        }
+
+        std::vector<unsigned char> image;
+        unsigned long              w = 0;
+        unsigned long              h = 0;
+        int error = decodePNG(image, w, h, &png_file_in_memory[0],
+                              png_file_in_memory.size(), false);
+
+        // if there's an error, display it
+        if (error != 0)
+        {
+            std::cerr << "error: " << error << std::endl;
+            return false;
+        }
+        // индентификатор текстуры
+        GLuint tex_handl = 0;
+        //Первый указывает количество имен-идентификаторов текстур,
+        //которые нужно создать. Второй параметр - указатель на массив элементов
+        //типа GLuint.
+        glGenTextures(1, &tex_handl);
+        GL_CHECK()
+        //привязываемся к текстуре фотографии, т.е. делаем ее активной.
+        glBindTexture(GL_TEXTURE_2D, tex_handl);
+        GL_CHECK()
+
+        GLint mipmap_level = 0;
+        GLint border       = 0;
+        //создать саму текстуру в памяти
+        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
+                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+        GL_CHECK()
+        //установить параметры текстуры
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GL_CHECK()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GL_CHECK()
+        return true;
+    }
+
 private:
-    SDL_Window*   window      = nullptr;
-    SDL_GLContext gl_context  = nullptr;
-    GLuint        program_id_ = 0;
+    SDL_Window*   window     = nullptr;
+    SDL_GLContext gl_context = nullptr;
+    // GLuint        program_id_ = 0;
 };
 engine::~engine() {}
 

@@ -10,10 +10,15 @@ struct vertex
     vertex()
         : x(0.0f)
         , y(0.0f)
+        , tx(0.0f)
+        , ty(0.0f)
     {
     }
     float x;
     float y;
+
+    float tx = 0.f; // texture coordinate
+    float ty = 0.f;
 };
 
 struct triangle
@@ -46,5 +51,6 @@ public:
     /// execute while "close SDLevent"
     virtual bool read_input(bool&) = 0;
     /// return seconds from initialization
-    virtual float get_time_from_init() = 0;
+    virtual float get_time_from_init()                = 0;
+    virtual bool  load_texture(std::string_view path) = 0;
 };
