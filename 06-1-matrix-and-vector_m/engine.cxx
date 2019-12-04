@@ -64,7 +64,86 @@ std::ostream& operator<<(std::ostream& os, const SDL_version& v)
     os << v.patch;
     return os;
 }
+/////////////////////////////////////////
+vec2::vec2()
+    : x(0.f)
+    , y(1.f)
+{
+}
 
+vec2::vec2(float x_, float y_)
+    : x(x_)
+    , y(y_)
+{
+}
+
+vec2 operator+(const vec2& l, const vec2& r)
+{
+    vec2 rez;
+    rez.x = l.x + r.x;
+    rez.y = l.y + r.y;
+    return rez;
+}
+
+mat2::mat2()
+    : col0(1.f, 0.f)
+    , col1(0.f, 1.f)
+{
+}
+
+mat2 mat2::identiry()
+{
+    return mat2::scale(1.f);
+}
+
+mat2 mat2::scale(float scale)
+{
+    mat2 rez;
+    rez.col0.x = scale;
+    rez.col1.y = scale;
+    return rez;
+}
+
+mat2 mat2::rotate(float alfa)
+{
+    mat2 rez;
+    rez.col0.x = std::cos(alfa);
+    rez.col0.y = std::sin(alfa);
+
+    rez.col1.x = -std::sin(alfa);
+    rez.col1.y = std::cos(alfa);
+    return rez;
+}
+vec2 operator*(const vec2& v, const mat2& m)
+{
+    vec2 result;
+    result.x = v.x * m.col0.x + v.y * m.col0.y;
+    result.y = v.x * m.col1.x + v.y * m.col1.y;
+    return result;
+}
+
+mat2 operator*(const mat2& m1, const mat2& m2)
+{
+    mat2 r;
+
+    r.col0.x = m1.col0.x * m2.col0.x + m1.col1.x * m2.col0.y;
+    r.col1.x = m1.col0.x * m2.col1.x + m1.col1.x * m2.col1.y;
+    r.col0.y = m1.col0.y * m2.col0.x + m1.col1.y * m2.col0.y;
+    r.col1.y = m1.col0.y * m2.col1.x + m1.col1.y * m2.col1.y;
+
+    return r;
+}
+
+std::istream& operator>>(std::istream& is, mat2& m)
+{
+
+    is >> m.col0.x;
+    is >> m.col1.x;
+    is >> m.col0.y;
+    is >> m.col1.y;
+    return is;
+}
+/// /////////////////////////////////////////
 tri0::tri0()
     : v{ v0(), v0(), v0() }
 {
@@ -80,31 +159,13 @@ tri2::tri2()
 {
 }
 
-std::istream& operator>>(std::istream& is, pos& p)
+std::istream& operator>>(std::istream& is, vec2& p)
 {
     is >> p.x;
     is >> p.y;
     return is;
 }
-std::istream& operator>>(std::istream& is, uv_pos& uv)
-{
-    is >> uv.u;
-    is >> uv.v;
-    return is;
-}
-std::istream& operator>>(std::istream& is, color& c)
-{
-    float r = 0.f;
-    float g = 0.f;
-    float b = 0.f;
-    float a = 0.f;
-    is >> r;
-    is >> g;
-    is >> b;
-    is >> a;
-    c = color(r, g, b, a);
-    return is;
-}
+
 std::istream& operator>>(std::istream& is, v0& v)
 {
     is >> v.p;
@@ -118,6 +179,7 @@ std::istream& operator>>(std::istream& is, v1& v)
 }
 std::istream& operator>>(std::istream& is, v2& v)
 {
+
     is >> v.p;
     is >> v.uv;
     is >> v.c;

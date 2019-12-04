@@ -5,32 +5,43 @@
 #include <string>
 #include <string_view>
 #include <vector>
+////////////////////////////////////////////////////////////
+struct vec2
+{
+    vec2();
+    vec2(float x_, float y_);
+    float x = 0;
+    float y = 0;
+};
+vec2 operator+(const vec2& l, const vec2& r);
+struct mat2
+{
+    mat2();
+    static mat2 identiry();
+    static mat2 scale(float scale);
+    static mat2 rotate(float alfa);
+    vec2        col0;
+    vec2        col1;
+};
+vec2 operator*(const vec2& v, const mat2& m);
+mat2 operator*(const mat2& m1, const mat2& m2);
 
-struct pos
-{
-    float x = 0.0f;
-    float y = 0.0f;
-};
-struct uv_pos
-{
-    float u = 0.0f;
-    float v = 0.0f;
-};
+///////////////////////////////////////////////////////////
 
 struct v0
 {
-    pos p;
+    vec2 p;
 };
 struct v1
 {
-    pos   p;
+    vec2  p;
     color c;
 };
 struct v2
 {
-    pos    p;
-    uv_pos uv;
-    color  c;
+    vec2  p;
+    vec2  uv;
+    color c;
 };
 
 struct tri0
@@ -49,9 +60,8 @@ struct tri2
     v2 v[3];
 };
 
-std::istream& operator>>(std::istream&, pos&);
-std::istream& operator>>(std::istream&, uv_pos&);
-std::istream& operator>>(std::istream&, color&);
+std::istream& operator>>(std::istream& is, mat2&);
+std::istream& operator>>(std::istream&, vec2&);
 std::istream& operator>>(std::istream&, v0&);
 std::istream& operator>>(std::istream&, v1&);
 std::istream& operator>>(std::istream&, v2&);

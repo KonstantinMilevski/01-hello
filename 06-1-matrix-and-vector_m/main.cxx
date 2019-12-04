@@ -57,14 +57,14 @@ int main()
                 case -1:
                     continue_loop = false;
                     break;
-                    //                case 1:
-                    //                    ++current_shader;
-                    //                    if (current_shader > 2)
-                    //                    {
-                    //                        current_shader = 0;
-                    //                    }
+                case 1:
+                    ++current_shader;
+                    if (current_shader > 2)
+                    {
+                        current_shader = 0;
+                    }
 
-                    //                    break;
+                    break;
                 default:
                     break;
             }
@@ -122,11 +122,25 @@ int main()
             // animate one triangle texture coordinates
             for (auto& v : tr1.v)
             {
-                v.uv.u += c;
-                v.uv.v += s;
+
+                v.uv.x += c;
+                v.uv.y += s;
             }
 
             engine->render(tr1, texture);
+            mat2 aspect;
+            aspect.col0.x = 640.f / 480.f;
+            aspect.col0.y = 0.f;
+            aspect.col1.x = 0.f;
+            aspect.col1.y = 1.f;
+
+            mat2 m = aspect * mat2::rotate(time) * mat2::scale(std::sin(time));
+
+            for (auto& v : tr2.v)
+            {
+                v.p = v.p * m;
+            }
+
             engine->render(tr2, texture);
         }
 

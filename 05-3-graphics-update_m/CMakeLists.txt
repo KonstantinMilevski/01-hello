@@ -5,9 +5,14 @@ add_library(engine-05-3 SHARED engine.cxx
                                engine.hxx
                                glad/glad.h
                                glad/glad.c
+                               color.hxx
+                               color.cxx
                                picopng.hxx)
 target_compile_features(engine-05-3 PUBLIC cxx_std_17)
 
+find_package(OpenGL REQUIRED)
+target_include_directories(engine-05-3 PRIVATE ${OPENGL_INCLUDE_DIR})
+target_link_libraries(engine-05-3 PRIVATE ${OPENGL_LIBRARIES})
 
 
 find_package(sdl2 REQUIRED)
