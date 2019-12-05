@@ -5,6 +5,10 @@ add_library(engine-05-3 SHARED engine.cxx
                                engine.hxx
                                glad/glad.h
                                glad/glad.c
+                               shader_gl_es20.hxx
+                               shader_gl_es20.cxx
+                               texture_gl_es20.hxx
+                               texture_gl_es20.cxx
                                color.hxx
                                color.cxx
                                picopng.hxx)

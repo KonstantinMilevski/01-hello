@@ -57,14 +57,14 @@ int main()
                 case -1:
                     continue_loop = false;
                     break;
-                    //                case 1:
-                    //                    ++current_shader;
-                    //                    if (current_shader > 2)
-                    //                    {
-                    //                        current_shader = 0;
-                    //                    }
+                case 1:
+                    ++current_shader;
+                    if (current_shader > 2)
+                    {
+                        current_shader = 0;
+                    }
 
-                    //                    break;
+                    break;
                 default:
                     break;
             }
