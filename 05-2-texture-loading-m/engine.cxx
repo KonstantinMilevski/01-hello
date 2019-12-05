@@ -152,7 +152,7 @@ public:
                                             varying vec2 v_tex_coord;
                                             void main()
                                             {
-                                                v_tex_coord = a_tex_coord;
+                                                v_tex_coord = -1.f*a_tex_coord;
                                                 gl_Position = vec4(a_position, 0.0, 1.0);
                                             }
                                             )";
@@ -413,12 +413,23 @@ public:
         GLint mipmap_level = 0;
         GLint border       = 0;
         //создать саму текстуру в памяти
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
-                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+        // clang-format off
+        glTexImage2D(GL_TEXTURE_2D, //Specifies the target texture of the active texture unit.
+                     mipmap_level,  //Specifies the level-of-detail number. Level 0 is the base image level
+                     GL_RGBA,       //Specifies the internal format of the texture.
+                     static_cast<GLsizei> (w),
+                     static_cast<GLsizei> (h),
+                     border,        //Specifies the width of the border. Must be 0
+                     GL_RGBA,       //Specifies the format of the texel data. Must match internalformat
+                     GL_UNSIGNED_BYTE, //Specifies the data type of the texel data. rgba - (0,255)
+                     &image[0]);    //pointer on array
+        // clang-format on
         GL_CHECK()
         //установить параметры текстуры
+        // for _MIN_FILTER (min picture) - GL_NEAREST
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         GL_CHECK()
+        // for _MAG_FILTER (big picture)  - GL_NEAREST
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         GL_CHECK()
         return true;

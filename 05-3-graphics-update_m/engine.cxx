@@ -197,6 +197,7 @@ public:
 
     void use() const
     {
+        // turn on shader
         glUseProgram(program_id);
         GL_CHECK();
     }
@@ -204,6 +205,7 @@ public:
     void set_uniform(std::string_view uniform_name, texture_gl_es20* texture)
     {
         assert(texture != nullptr);
+        /// index of uniform
         const int location =
             glGetUniformLocation(program_id, uniform_name.data());
         GL_CHECK();
@@ -213,12 +215,14 @@ public:
             throw std::runtime_error("can't get uniform location");
         }
         unsigned int texture_unit = 0;
+        /// activate first texture(0-8), simple - one
         glActiveTexture(GL_TEXTURE0 + texture_unit);
         GL_CHECK();
 
         texture->bind();
 
         // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
+        // 1- index uniform, second - index of texture we want activate
         glUniform1i(location, static_cast<int>(0 + texture_unit));
         GL_CHECK();
     }
@@ -329,7 +333,6 @@ private:
 };
 /*----------------------------------------------------------------------------------------*/
 
-//////////////////////////////
 class engine_impl final : public engine
 {
 public:
@@ -486,7 +489,7 @@ public:
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
-
+    /*----------------------------------------------------------------------------*/
     texture* create_texture(std::string_view path) final
     {
         return new texture_gl_es20(path);
@@ -498,8 +501,11 @@ public:
         shader00->use();
         shader00->set_uniform("u_color", c);
         // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
-                              &t.v[0].p.x);
+
+        glVertexAttribPointer(0, // 0 - position attribute
+                              2, GL_FLOAT,
+                              GL_FALSE, // float==float (без приведания)
+                              sizeof(v0), &t.v[0].p.x);
         GL_CHECK();
         glEnableVertexAttribArray(0);
         GL_CHECK();

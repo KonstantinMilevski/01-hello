@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
+#pragma STDC FP_CONTRACT off
 vertex blend_vertex(const vertex& left, const vertex& right, const float& t)
 {
     vertex v;
