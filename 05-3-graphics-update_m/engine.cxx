@@ -2,7 +2,6 @@
 
 #include "color.hxx"
 #include "glad/glad.h"
-
 #include "shader_gl_es20.hxx"
 
 #include <algorithm>
