@@ -67,8 +67,8 @@ int main()
     bool continue_loop = true;
 
     vec2        current_tank_pos(0.f, 0.f);
-    float       current_tank_direction(0.f);
     const float pi = 3.1415926f;
+    float       current_tank_direction(0);
 
     while (continue_loop)
     {
@@ -87,26 +87,50 @@ int main()
                     break;
             }
         }
-
         if (engine->is_key_down(keys::left))
         {
-            current_tank_pos.x -= 0.01f;
-            current_tank_direction = pi / 2.f;
+            current_tank_pos.x -= 0.02f;
+            current_tank_direction = pi * 0.5f;
         }
         else if (engine->is_key_down(keys::right))
         {
-            current_tank_pos.x += 0.01f;
+            current_tank_pos.x += 0.02f;
             current_tank_direction = -pi / 2.f;
         }
         else if (engine->is_key_down(keys::up))
         {
-            current_tank_pos.y += 0.01f;
-            current_tank_direction = 0.f;
+            current_tank_pos.y += 0.02f;
+            current_tank_direction = -pi;
         }
         else if (engine->is_key_down(keys::down))
         {
-            current_tank_pos.y -= 0.01f;
-            current_tank_direction = -pi;
+            current_tank_pos.y -= 0.02f;
+            current_tank_direction = 0.f;
+        }
+        float s_alfa = std::sin(0.25 * pi);
+        if (engine->is_key_down(keys::down) && engine->is_key_down(keys::right))
+        {
+            current_tank_pos.x += 0.02f * s_alfa;
+            current_tank_pos.y -= 0.02f * s_alfa * 640.f / 480.f;
+            current_tank_direction = -pi * 0.25f;
+        }
+        if (engine->is_key_down(keys::down) && engine->is_key_down(keys::left))
+        {
+            current_tank_pos.x -= 0.02f * s_alfa;
+            current_tank_pos.y -= 0.02f * s_alfa * 640.f / 480.f;
+            current_tank_direction = pi * 0.25f;
+        }
+        if (engine->is_key_down(keys::up) && engine->is_key_down(keys::left))
+        {
+            current_tank_pos.x -= 0.02f * s_alfa;
+            current_tank_pos.y += 0.02f * s_alfa * 2.f;
+            current_tank_direction = pi * 0.75f;
+        }
+        if (engine->is_key_down(keys::up) && engine->is_key_down(keys::right))
+        {
+            current_tank_pos.x += 0.02f * s_alfa;
+            current_tank_pos.y += 0.02f * s_alfa * 2.f;
+            current_tank_direction = -pi * 0.75f;
         }
 
         mat2x3 move   = mat2x3::move(current_tank_pos);

@@ -308,7 +308,7 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("window 05-3", SDL_WINDOWPOS_CENTERED,
+        window = SDL_CreateWindow("window 06-3", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, 640, 480,
                                   ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
@@ -452,8 +452,10 @@ public:
                 {
                 v_tex_coord = a_tex_coord;
                 v_color = a_color;
-                vec3 pos = vec3(a_position, 1.0) * u_matrix;
-                gl_Position = vec4(pos, 1.0);
+
+                vec3 pos = vec3(a_position/2.f, 1.0) * u_matrix;
+
+               gl_Position = vec4(pos, 1.0);
                 }
                 )",
             R"(
@@ -494,7 +496,7 @@ public:
         using namespace std;
         // collect all events from SDL
         SDL_Event sdl_event;
-        if (SDL_PollEvent(&sdl_event))
+        if (SDL_WaitEvent(&sdl_event))
         {
             const ::bind* binding = nullptr;
 

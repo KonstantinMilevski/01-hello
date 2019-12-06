@@ -1,3 +1,5 @@
+/// take src shaders & attribute. compile shaders. set uniform
+/// link shaders, attribute. Create programm, attach all, use  program
 #pragma once
 
 #include "shader_gl_es20.hxx"

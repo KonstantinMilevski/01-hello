@@ -35,6 +35,8 @@ void shader_gl_es20::set_uniform(std::string_view uniform_name,
         throw std::runtime_error("can't get uniform location");
     }
     unsigned int texture_unit = 0;
+    /// select active texture unit, selects which texture unit subsequent
+    /// texture state calls will affect
     glActiveTexture(GL_TEXTURE0 + texture_unit);
     GL_CHECK();
 

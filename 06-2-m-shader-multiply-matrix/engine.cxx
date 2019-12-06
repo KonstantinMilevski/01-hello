@@ -149,66 +149,6 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-/////////////////////////////
-// mat2::mat2()
-//    : col0(1.f, 0.f)
-//    , col1(0.f, 1.f)
-//{
-//}
-
-// mat2 mat2::identiry()
-//{
-//    return mat2::scale(1.f);
-//}
-
-// mat2 mat2::scale(float scale)
-//{
-//    mat2 rez;
-//    rez.col0.x = scale;
-//    rez.col1.y = scale;
-//    return rez;
-//}
-
-// mat2 mat2::rotate(float alfa)
-//{
-//    mat2 rez;
-//    rez.col0.x = std::cos(alfa);
-//    rez.col0.y = std::sin(alfa);
-
-//    rez.col1.x = -std::sin(alfa);
-//    rez.col1.y = std::cos(alfa);
-//    return rez;
-//}
-// vec2 operator*(const vec2& v, const mat2& m)
-//{
-//    vec2 result;
-//    result.x = v.x * m.col0.x + v.y * m.col0.y;
-//    result.y = v.x * m.col1.x + v.y * m.col1.y;
-//    return result;
-//}
-
-// mat2 operator*(const mat2& m1, const mat2& m2)
-//{
-//    mat2 r;
-
-//    r.col0.x = m1.col0.x * m2.col0.x + m1.col1.x * m2.col0.y;
-//    r.col1.x = m1.col0.x * m2.col1.x + m1.col1.x * m2.col1.y;
-//    r.col0.y = m1.col0.y * m2.col0.x + m1.col1.y * m2.col0.y;
-//    r.col1.y = m1.col0.y * m2.col1.x + m1.col1.y * m2.col1.y;
-
-//    return r;
-//}
-
-// std::istream& operator>>(std::istream& is, mat2& m)
-//{
-
-//    is >> m.col0.x;
-//    is >> m.col1.x;
-//    is >> m.col0.y;
-//    is >> m.col1.y;
-//    return is;
-//}
-/// /////////////////////////////////////////
 tri0::tri0()
     : v{ v0(), v0(), v0() }
 {
@@ -503,7 +443,7 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("window 05-3", SDL_WINDOWPOS_CENTERED,
+        window = SDL_CreateWindow("window 06-2", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, 640, 480,
                                   ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
@@ -563,7 +503,7 @@ public:
                                       { { 0, "a_position" } });
 
         shader00->use();
-        shader00->set_uniform("u_color", color(1.f, 0.f, 0.f, 1.f));
+        shader00->set_uniform("u_color", color(1.f, 1.f, 1.f, 1.f));
 
         shader01 = new shader_gl_es20(
             R"(
@@ -614,7 +554,7 @@ public:
 
         // turn on rendering with just created shader program
         shader02->use();
-
+        // s_texture, u_matrix
         shader03 = new shader_gl_es20(
             R"(
                 uniform mat3 u_matrix;
@@ -627,7 +567,7 @@ public:
                 {
                 v_tex_coord = a_tex_coord;
                 v_color = a_color;
-                vec3 pos = vec3(a_position, 1.0) * u_matrix;
+                vec3 pos = vec3(-1.f*a_position, 1.0) * u_matrix;
                 gl_Position = vec4(pos, 1.0);
                 }
                 )",
@@ -703,8 +643,8 @@ public:
         GL_CHECK();
         glEnableVertexAttribArray(1);
         GL_CHECK();
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_LINES, 0, 2);
+        //  glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK();
 
         glDisableVertexAttribArray(1);

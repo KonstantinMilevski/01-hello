@@ -117,17 +117,17 @@ int main()
 
             float time = engine->get_time_from_init();
             float s    = std::sin(time);
-            float c    = std::cos(time);
+            float c    = 1.f; // std::cos(time);
 
             // animate one triangle texture coordinates
             for (auto& v : tr1.v)
             {
-                v.uv.u += c;
+                v.uv.u += c + 0.3f;
                 v.uv.v += s;
             }
 
             engine->render(tr1, texture);
-            engine->render(tr2, texture);
+            // engine->render(tr2, texture);
         }
 
         engine->swap_buffer();

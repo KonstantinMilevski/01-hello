@@ -1,3 +1,4 @@
+/// read texture & activate
 
 #pragma once
 
@@ -18,6 +19,7 @@ public:
 
     void bind() const
     {
+        /// bind a named texture to a texturing target
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         GL_CHECK();
     }

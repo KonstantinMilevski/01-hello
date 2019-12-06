@@ -44,7 +44,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    int  current_shader = 2;
+    int  current_shader = 0;
     bool continue_loop  = true;
     while (continue_loop)
     {
@@ -82,7 +82,7 @@ int main()
             file >> tr1 >> tr2 >> tr11 >> tr22;
 
             float  time = engine->get_time_from_init();
-            mat2x3 move = mat2x3::move(vec2(std::sin(time), 0.f));
+            mat2x3 move = mat2x3::move(vec2(0.f /*std::sin(time)*/, 0.f));
 
             mat2x3 aspect;
             aspect.col0.x = 1;
@@ -90,7 +90,7 @@ int main()
             aspect.col1.x = 0.f;
             aspect.col1.y = 640.f / 480.f;
 
-            mat2x3 m = mat2x3::rotation(std::sin(time)) * move * aspect;
+            mat2x3 m = mat2x3::rotation(std::cos(time)) * move * aspect;
 
             for (auto& v : tr1.v)
             {
@@ -100,7 +100,7 @@ int main()
             {
                 v.p = v.p * m;
             }
-            engine->render(tr1, color(1.f, 0.f, 0.f, 1.f));
+            engine->render(tr1, color(0.f, 0.f, 1.f, 1.f));
             engine->render(tr2, color(0.f, 1.f, 0.f, 1.f));
         }
 
