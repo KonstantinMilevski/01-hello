@@ -38,24 +38,24 @@ int main()
         std::ifstream file("vertexes.txt");
         assert(!!file);
 
-        std::ifstream file1("vertexes1.txt");
-        assert(!!file1);
+        //        std::ifstream file1("vertexes1.txt");
+        //        assert(!!file1);
 
-        //        triangle tr;
-        //        file >> tr;
+        triangle tr;
+        file >> tr;
 
-        // engine->render_triangle(tr);
+        engine->render_triangle(tr);
 
         // file >> tr;
         // engine->render_triangle(tr);
-        std::vector<vertex> t;
-        vertex              v;
-        for (int var = 0; var < 9; ++var)
-        {
-            file1 >> v;
-            t.push_back(v);
-        }
-        engine->render_two_triangles(t);
+        //        std::vector<vertex> t;
+        //        vertex              v;
+        //        for (int var = 0; var < 9; ++var)
+        //        {
+        //            file1 >> v;
+        //            t.push_back(v);
+        //        }
+        //        engine->render_two_triangles(t);
         engine->swap_buffer();
     };
 

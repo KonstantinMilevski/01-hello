@@ -62,10 +62,10 @@ int main()
 
         float alpha = (std::sin(engine->get_time_from_init()) * 0.5f) + 0.5f;
 
-        // triangle tr1 = blend(t1, t3, alpha);
+        triangle tr1 = blend(t1, t3, alpha);
         triangle tr2 = blend(t2, t4, alpha);
 
-        // engine->render_triangle(tr1);
+        engine->render_triangle(tr1);
         engine->render_triangle(tr2);
 
         engine->swap_buffer();

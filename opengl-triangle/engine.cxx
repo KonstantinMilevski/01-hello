@@ -1,11 +1,28 @@
 #include "engine.hxx"
 #include "SDL.h"
 #include "glad/glad.h"
+#include <algorithm>
 #include <cassert>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+//#define U(x) (x)
+//#define V(x) (1.0f - (x))
+
+// static const GLfloat globBoxVertexData[] = {
+//    //   X     Y     Z       U        V
+//    // front
+//    1.0f,    1.0f,    1.0f, U(1.0f), V(1.0f), -1.0f,   1.0f,    1.0f,
+//    U(0.0f), V(1.0f), 1.0f, -1.0f,   1.0f,    U(1.0f), V(0.0f),
+
+//    // ....
+
+//};
+
+/// check opengl function
 #define GL_CHECK()                                                             \
     {                                                                          \
         const int err = static_cast<int>(glGetError());                        \
@@ -45,7 +62,84 @@ static void load_gl_func(const char* func_name, T& result)
     }
     result = reinterpret_cast<T>(gl_pointer);
 }
+unsigned long text_width  = 0;
+unsigned long text_height = 0;
+triangle      transform_coord_to_GL(size_t tex_w, size_t tex_h, triangle t)
+{
+    triangle n;
 
+    n.v[0].x = t.v[0].x * 2 / width - 1.0f;
+    n.v[0].y = t.v[0].y * 2 / heigh - 1.0f;
+    n.v[1].x = t.v[1].x * 2 / width - 1.0f;
+    n.v[1].y = t.v[1].y * 2 / heigh - 1.0f;
+    n.v[2].x = t.v[2].x * 2 / width - 1.0f;
+    n.v[2].y = t.v[2].y * 2 / heigh - 1.0f;
+
+    n.v[0].tx = t.v[0].tx / tex_w;
+    n.v[0].ty = t.v[0].ty / tex_h;
+    n.v[1].tx = t.v[1].tx / tex_w;
+    n.v[1].ty = t.v[1].ty / tex_h;
+    n.v[2].tx = t.v[2].tx / tex_w;
+    n.v[2].ty = t.v[2].ty / tex_h;
+    return n;
+}
+/// kod for SDL_events
+// static std::array<std::string_view, 17> event_names = {
+//    /// input events
+//    { "left_pressed", "left_released", "right_pressed", "right_released",
+//      "up_pressed", "up_released", "down_pressed", "down_released",
+//      /// virtual console events
+//      "turn_off" }
+//};
+// std::ostream& operator<<(std::ostream& stream, const event e)
+//{
+//    std::uint32_t value   = static_cast<std::uint32_t>(e);
+//    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
+//    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+//    if (value >= minimal && value <= maximal)
+//    {
+//        stream << event_names[value];
+//        return stream;
+//    }
+//    else
+//    {
+//        throw std::runtime_error("too big event value");
+//    }
+//}
+struct bind
+{
+    bind(SDL_Keycode _key, std::string_view _name)
+        : key(_key)
+        , name(_name)
+
+    {
+    }
+    SDL_Keycode      key;
+    std::string_view name;
+};
+const std::array<bind, 5> keys{
+    bind{ SDLK_LEFT, "left" },   bind{ SDLK_DOWN, "down" },
+    bind{ SDLK_RIGHT, "right" }, bind{ SDLK_UP, "rotate" },
+    bind{ SDLK_SPACE, "pause" },
+}
+
+;
+static bool check_input(const SDL_Event& e, const bind*& result)
+{
+    using namespace std;
+
+    const auto it = find_if(begin(keys), end(keys), [&](const ::bind& b) {
+        return b.key == e.key.keysym.sym;
+    });
+
+    if (it != end(keys))
+    {
+        result = &(*it);
+        return true;
+    }
+    return false;
+}
+///
 std::ostream& operator<<(std::ostream& os, const SDL_version& v)
 {
     os << v.major << ':';
@@ -58,7 +152,8 @@ std::istream& operator>>(std::istream& is, vertex& v)
 {
     is >> v.x;
     is >> v.y;
-
+    is >> v.tx;
+    is >> v.ty;
     return is;
 }
 std::istream& operator>>(std::istream& is, triangle& t)
@@ -96,8 +191,8 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("window 05-1", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 640, 480,
+        window = SDL_CreateWindow("open-GL test", SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED, width, heigh,
                                   ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
         {
@@ -143,15 +238,15 @@ public:
         GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         GL_CHECK();
         string_view vertex_source = R"(
-                                    attribute vec2 a_position;
-varying vec2 v_pos;
-
-                                    void main()
-                                    {
-v_pos=a_position;
-                                      gl_Position = vec4(a_position,0.0, 1.0);
-                                    }
-                                    )";
+attribute vec2 a_position;
+attribute vec2 a_tex_coord;
+varying vec2 v_tex_coord;
+void main()
+{
+    v_tex_coord = vec2(a_tex_coord.x, a_tex_coord.y/7.0f);
+    gl_Position = vec4(a_position*1.f, 0.0, 1.0);
+}
+)";
         const char* source        = vertex_source.data();
         glShaderSource(vertex_shader, 1, &source, nullptr);
         GL_CHECK();
@@ -185,17 +280,13 @@ v_pos=a_position;
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         GL_CHECK();
         string_view fragment_source = R"(
-                      varying vec4 v_position;
-varying vec2 v_pos;
-                      void main()
-                      {
-                        float c=v_pos.x+0.5f;
-
-
-
-                              gl_FragColor = vec4(0.9f, 0.0, 0.0, c);
-                      }
-                      )";
+varying vec2 v_tex_coord;
+uniform sampler2D s_texture;
+void main()
+{
+    gl_FragColor = texture2D(s_texture, v_tex_coord);
+}
+)";
         source                      = fragment_source.data();
         glShaderSource(fragment_shader, 1, &source, nullptr);
         GL_CHECK();
@@ -262,9 +353,40 @@ varying vec2 v_pos;
             GL_CHECK()
             return serr.str();
         }
+        glDeleteShader(vertex_shader);
+        GL_CHECK()
+        glDeleteShader(fragment_shader);
+        GL_CHECK()
         glUseProgram(program_id_);
         GL_CHECK()
 
+        ///
+        int location = glGetUniformLocation(program_id_, "s_texture");
+        GL_CHECK();
+        assert(-1 != location);
+        int texture_unit = 0;
+        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        GL_CHECK();
+        unsigned long w{ 0 };
+        unsigned long h{ 0 };
+        if (!load_texture("blocks1.png", w, h))
+        {
+            return "failed load texture\n";
+        }
+
+        // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
+        glUniform1i(location, 0 + texture_unit);
+        GL_CHECK();
+
+        // glEnable(SDL_GL_DOUBLEBUFFER);
+        glEnable(GL_DEPTH_TEST);
+        // glDepthFunc(GL_LESS);
+
+        //        glEnable(GL_BLEND);
+        //        GL_CHECK();
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK();
+        ///
         glEnable(GL_DEPTH_TEST);
         GL_CHECK()
 
@@ -272,12 +394,77 @@ varying vec2 v_pos;
     }
     void uninitialize() override final
     {
-        glDeleteProgram(program_id_);
+        // glDeleteProgram(program_id_);
         SDL_GL_DeleteContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
-    void render_triangle(const triangle& t) override final
+    bool load_texture(std::string_view path, unsigned long w,
+                      unsigned long h) final
+    {
+        // size_t                 i = std::filesystem::file_size(path);
+        std::vector<std::byte> png_file_in_memory;
+        std::ifstream          ifs(path.data(), std::ios::binary);
+        if (!ifs)
+        {
+            return false;
+        }
+        ifs.seekg(0, std::ios_base::end);
+        size_t pos_end_file = static_cast<size_t>(ifs.tellg());
+        png_file_in_memory.resize(pos_end_file);
+        ifs.seekg(0, std::ios_base::beg);
+        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
+                 static_cast<std::streamsize>(png_file_in_memory.size()));
+        if (!ifs.good())
+        {
+            return false;
+        }
+        // std::reverse(png_file_in_memory.begin(),
+        // png_file_in_memory.end());
+
+        //        unsigned long          w{ 0 };
+        //        unsigned long          h{ 0 };
+        std::vector<std::byte> image;
+        int error = decodePNG(image, w, h, &png_file_in_memory[0],
+                              png_file_in_memory.size(), false);
+        if (0 != error)
+        {
+            std::cerr << "error: " << error << std::endl;
+            return false;
+        }
+        text_width       = w;
+        text_height      = h;
+        GLuint tex_handl = 0;
+        glGenTextures(1, &tex_handl);
+        GL_CHECK()
+        glBindTexture(GL_TEXTURE_2D, tex_handl);
+        GL_CHECK()
+
+        GLint mipmap_level = 0;
+        GLint border       = 0;
+        //происходит выделение памяти и загрузка в нее наших данных.
+        // clang-format off
+        glTexImage2D(GL_TEXTURE_2D, // Specifies the target texture of the active texture unit
+                     mipmap_level,  // Specifies the level-of-detail number. Level 0 is the base image level
+                     GL_RGBA,       // Specifies the internal format of the texture
+                     static_cast<GLsizei>(w),
+                     static_cast<GLsizei>(h),
+                     border,        // Specifies the width of the border. Must be 0. For GLES 2.0
+                     GL_RGBA,       // Specifies the format of the texel data. Must match internalformat
+                     GL_UNSIGNED_BYTE, // Specifies the data type of the texel data
+                     &image[0]);    // Specifies a pointer to the image data in memory
+        // clang-format on
+        GL_CHECK()
+        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+        //        GL_CLAMP_TO_EDGE); GL_CHECK() glTexParameteri(GL_TEXTURE_2D,
+        //        GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); GL_CHECK()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GL_CHECK()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GL_CHECK()
+        return true;
+    }
+    void render_triangle(triangle& t) override
     {
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
@@ -306,37 +493,85 @@ varying vec2 v_pos;
         glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK()
     }
+    void render_text_triangle(triangle& t_in) override
+    {
+        triangle t = transform_coord_to_GL(text_width, text_height, t_in);
+        // vertex coordinates
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t.v[0].x);
+        GL_CHECK();
+        glEnableVertexAttribArray(0);
+        GL_CHECK();
 
+        // texture coordinates
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t.v[0].tx);
+        GL_CHECK();
+        glEnableVertexAttribArray(1);
+        GL_CHECK();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        GL_CHECK();
+    }
     void swap_buffer() override final
     {
         SDL_GL_SwapWindow(window);
+
         glClearColor(0.3f, 0.3f, 1.0f, 0.0f);
         GL_CHECK()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK()
     }
+    bool read_event(event& e) override final
+    {
 
-    bool read_input(bool& key) override final
+        using namespace std;
+        // collect all events from SDL
+        SDL_Event sdl_event;
+        if (SDL_WaitEvent(&sdl_event))
+        {
+            const ::bind* binding = nullptr;
+
+            if (sdl_event.type == SDL_QUIT)
+            {
+                e = event::turn_off;
+                return true;
+            }
+            else if (sdl_event.type == SDL_KEYDOWN)
+            {
+                if (check_input(sdl_event, binding))
+                {
+                    // e = binding->event_pressed;
+                    return true;
+                }
+            }
+            //            else if (sdl_event.type == SDL_KEYUP)
+            //            {
+            //                if (check_input(sdl_event, binding))
+            //                {
+            //                    e = binding->event_released;
+            //                    return true;
+            //                }
+            //}
+        }
+        return false;
+    }
+    bool read_input(int& key) override final
     {
         using namespace std;
         SDL_Event sdl_event;
         if (SDL_PollEvent(&sdl_event))
         {
+            key = 1;
+
             if (sdl_event.type == SDL_QUIT)
             {
-                key = false;
+                key = 0;
                 return true;
             }
         }
 
         return false;
-    }
-
-    float get_time_from_init() override final
-    {
-        std::uint32_t time_from_begining = SDL_GetTicks();
-        float         current_time       = time_from_begining * 0.001f;
-        return current_time;
     }
 
 private:

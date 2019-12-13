@@ -6,24 +6,6 @@
 #include <iostream>
 #include <memory>
 
-v0 blend_vertex(const v0& left, const v0& right, const float& t)
-{
-    v0 v;
-    v.p.x = left.p.x + t * (right.p.x - left.p.x);
-    v.p.y = left.p.y + t * (right.p.y - left.p.y);
-    return v;
-}
-
-tri0 blend(const tri0& left, const tri0& right, const float& t)
-{
-
-    tri0 tr;
-    tr.v[0] = blend_vertex(left.v[0], right.v[0], t);
-    tr.v[1] = blend_vertex(left.v[1], right.v[1], t);
-    tr.v[2] = blend_vertex(left.v[2], right.v[2], t);
-    return tr;
-}
-
 using namespace std;
 
 int main()
@@ -89,12 +71,18 @@ int main()
         }
         if (engine->is_key_down(keys::left))
         {
-            current_tank_pos.x -= 0.02f;
+            if (current_tank_pos.x >= -1.0)
+            {
+                current_tank_pos.x -= 0.02f;
+            }
             current_tank_direction = pi * 0.5f;
         }
         else if (engine->is_key_down(keys::right))
         {
-            current_tank_pos.x += 0.02f;
+            if (current_tank_pos.x <= 1.0)
+            {
+                current_tank_pos.x += 0.02f;
+            }
             current_tank_direction = -pi / 2.f;
         }
         else if (engine->is_key_down(keys::up))
@@ -132,15 +120,17 @@ int main()
             current_tank_pos.y += 0.02f * s_alfa * 2.f;
             current_tank_direction = -pi * 0.75f;
         }
+        if (current_tank_pos.y >= -1.0 && current_tank_pos.y <= 1.0)
+        {
+            mat2x3 move   = mat2x3::move(current_tank_pos);
+            mat2x3 aspect = mat2x3::scale(1, 640.f / 480.f);
+            mat2x3 rot    = mat2x3::rotation(current_tank_direction);
 
-        mat2x3 move   = mat2x3::move(current_tank_pos);
-        mat2x3 aspect = mat2x3::scale(1, 640.f / 480.f);
-        mat2x3 rot    = mat2x3::rotation(current_tank_direction);
-        mat2x3 m      = rot * move * aspect;
+            mat2x3 m = rot * move * aspect;
+            engine->render(*vertex_buf, texture, m);
 
-        engine->render(*vertex_buf, texture, m);
-
-        engine->swap_buffer();
+            engine->swap_buffer();
+        }
     }
 
     engine->uninitialize();

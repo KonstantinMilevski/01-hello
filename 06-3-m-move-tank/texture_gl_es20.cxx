@@ -52,7 +52,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLint   border       = 0;
     GLsizei width_       = static_cast<GLsizei>(w);
     GLsizei height_      = static_cast<GLsizei>(h);
-    //создать саму текстуру в памяти
+    // send texture OPenGL
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
     GL_CHECK();

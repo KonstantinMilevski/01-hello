@@ -453,8 +453,7 @@ public:
                 v_tex_coord = a_tex_coord;
                 v_color = a_color;
 
-                vec3 pos = vec3(a_position/2.f, 1.0) * u_matrix;
-
+                vec3 pos = vec3(a_position, 1.0f) * u_matrix;
                gl_Position = vec4(pos, 1.0);
                 }
                 )",

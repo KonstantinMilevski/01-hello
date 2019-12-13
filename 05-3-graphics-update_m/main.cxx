@@ -127,7 +127,7 @@ int main()
             }
 
             engine->render(tr1, texture);
-            // engine->render(tr2, texture);
+            engine->render(tr2, texture);
         }
 
         engine->swap_buffer();

@@ -3,6 +3,7 @@
 #include "glad/glad.h"
 #include "picopng.hxx"
 
+#include <algorithm>
 #include <cassert>
 #include <exception>
 #include <iostream>
@@ -152,8 +153,8 @@ public:
                                             varying vec2 v_tex_coord;
                                             void main()
                                             {
-                                                v_tex_coord = -1.f*a_tex_coord*3.f;
-                                                gl_Position = vec4(a_position*2.f, 0.0, 1.0);
+                                                v_tex_coord = a_tex_coord;
+                                                gl_Position = vec4(a_position/1.f, 0.0, 1.0);
                                             }
                                             )";
         const char* source        = vertex_source.data();
@@ -399,6 +400,7 @@ public:
             std::cerr << "error: " << error << std::endl;
             return false;
         }
+        // std::reverse(std::begin(image), std::end(image));
         // индентификатор текстуры
         GLuint tex_handl = 0;
         //Первый указывает количество имен-идентификаторов текстур,

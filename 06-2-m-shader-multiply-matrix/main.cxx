@@ -69,6 +69,7 @@ int main()
                     break;
             }
         }
+
         if (current_shader == 0)
         {
             std::ifstream file("vert_pos.txt");
