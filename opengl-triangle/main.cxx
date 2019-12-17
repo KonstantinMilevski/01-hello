@@ -4,35 +4,58 @@
 #include <memory>
 
 #include "engine.hxx"
-void transform_coor();
-int  figures[7][4] = {
+
+void      transform_coor();
+const int m             = 10;
+const int n             = 10;
+int       fild[m][n]    = { 0 };
+int       figures[7][4] = {
     1, 3, 5, 7, // I
     2, 4, 5, 7, // S
-    3, 5, 4, 6, // Z
-    3, 5, 4, 7, // T
+    3, 5, 4, 6, // Z 3, 5, 4, 6,
+    3, 5, 4, 7, // T 3, 5, 4, 7,
     2, 3, 5, 7, // L
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-struct Point
+const int text_size = 18;
+const int quad_size = 18;
+vec2      a[4], b[4];
+
+void draw_one_fig(std::vector<triangle>& vec_tr)
 {
-    int x, y;
-} a[4], b[4];
-void draw_one_fig()
-{
+    // std::vector<triangle> vec_tr;
     int n = 3; // задаём тип тетрамино
     for (int i = 0; i < 4; i++)
     {
-        a[i].x = figures[n][i] % 2;
-        a[i].y = figures[n][i] / 2;
+        a[i].x = figures[n][i] % 2 + 5;
+        a[i].y = figures[n][i] / 2 + 5;
     }
     for (int i = 0; i < 4; i++)
     {
-        // Устанавливаем позицию каждого кусочка тетрамино
-        // sprite.setPosition(a[i].x * 18, a[i].y * 18);
-        // Отрисовка спрайта
-        // window.draw(sprite);
+        b[i].x = a[i].x * quad_size;
+        b[i].y = a[i].y * quad_size;
     }
+    for (int i = 0; i < 4; i++)
+
+    {
+        vertex   v0{ b[i].x, b[i].y, 0, 0 };
+        vertex   v1{ b[i].x, b[i].y + quad_size, 0, text_size };
+        vertex   v2{ b[i].x + quad_size, b[i].y + quad_size, text_size,
+                   text_size };
+        vertex   v3{ b[i].x + quad_size, b[i].y, text_size, 0 };
+        triangle t0(v0, v1, v2);
+        triangle t1(v3, v0, v2);
+        vec_tr.push_back(t0);
+        vec_tr.push_back(t1);
+    }
+    //    for (int i = 0; i < 4; i++)
+    //    {
+    //         Устанавливаем позицию каждого кусочка тетрамино
+    //         sprite.setPosition(a[i].x * 18, a[i].y * 18);
+    //         Отрисовка спрайта
+    //         window.draw(sprite);
+    //    }
 }
 triangle scale_size(size_t w, size_t h, triangle t)
 {
@@ -67,16 +90,24 @@ int main()
         std::cerr << error << std::endl;
         return EXIT_FAILURE;
     }
+
+    texture* texture = engine->create_texture("tank.png");
+    if (nullptr == texture)
+    {
+        std::cerr << "failed load texture\n";
+        return EXIT_FAILURE;
+    }
+
     bool continue_loop = true;
     while (continue_loop)
     {
-        int key = 0;
+        keys game_key;
 
-        while (engine->read_input(key))
+        while (engine->read_event(game_key))
         {
-            switch (key)
+            switch (game_key)
             {
-                case 0:
+                case keys::exit:
                     continue_loop = false;
                     break;
                 default:
@@ -97,14 +128,28 @@ int main()
         //                    { 326, 200, 126, 18 });
         //        triangle q2({ 326, 218, 126, 18 }, { 200, 218, 0, 18 },
         //                    { 326, 200, 126, 18 });
-        triangle q1({ 200, 200, 0, 0 }, { 200, 236, 0, 18 },
-                    { 236, 200, 18, 18 });
-        triangle q2({ 236, 236, 18, 18 }, { 200, 236, 0, 18 },
-                    { 236, 200, 18, 18 });
+
+        //        triangle q1({ 200, 200, 0, 0 }, { 200, 236, 0, 18 },
+        //                    { 236, 200, 18, 18 });
+        //        triangle q2({ 236, 236, 18, 18 }, { 200, 236, 0, 18 },
+        //                    { 236, 200, 18, 18 });
+        //        triangle q5({ 300, 300, 0, 0 }, { 300, 318, 0, 18 },
+        //                    { 318, 300, 18, 18 });
+        //        triangle q6({ 318, 318, 0, 0 }, { 300, 318, 0, 18 },
+        //                    { 318, 300, 18, 18 });
+        //        triangle q3({ 0, 0, 0, 0 }, { 000, 18, 0, 18 }, { 18, 000, 18,
+        //        18 }); triangle q4({ 18, 18, 0, 0 }, { 000, 18, 0, 18 }, { 18,
+        //        000, 18, 18 });
+
+        // std::vector<triangle> t{ q1, q2, q3, q4, q5, q6 };
+        ////
+        std::vector<triangle> t2;
+        draw_one_fig(t2);
+        engine->render_two_triangles(t2);
         // triangle q2 = scale_size(126, 18, tr2);
 
-        engine->render_text_triangle(q1);
-        engine->render_text_triangle(q2);
+        //        engine->render_text_triangle(q1);
+        //        engine->render_text_triangle(q2);
         engine->swap_buffer();
     };
 

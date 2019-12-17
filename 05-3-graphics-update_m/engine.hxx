@@ -3,7 +3,7 @@
 #include "SDL2/SDL.h"
 #include "color.hxx"
 #include "glad/glad.h"
-
+#include "picopng.hxx"
 #include <iostream>
 #include <sstream>
 #include <string_view>
@@ -125,10 +125,12 @@ public:
     virtual void        swap_buffer()                = 0;
     virtual bool        read_input(int&)             = 0;
     /// return seconds from initialization
-    virtual float    get_time_from_init()                  = 0;
+    virtual float get_time_from_init() = 0;
+
     virtual texture* create_texture(std::string_view path) = 0;
     virtual void     destroy_texture(texture*)             = 0;
-    virtual void     render(const tri0&, const color&)     = 0;
-    virtual void     render(const tri1&)                   = 0;
-    virtual void     render(const tri2&, texture*)         = 0;
+
+    virtual void render(const tri0&, const color&) = 0;
+    virtual void render(const tri1&)               = 0;
+    virtual void render(const tri2&, texture*)     = 0;
 };

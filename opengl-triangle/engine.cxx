@@ -1,6 +1,8 @@
 #include "engine.hxx"
 #include "SDL.h"
 #include "glad/glad.h"
+#include "picopng.hxx"
+
 #include <algorithm>
 #include <cassert>
 #include <exception>
@@ -9,20 +11,6 @@
 #include <sstream>
 #include <vector>
 
-//#define U(x) (x)
-//#define V(x) (1.0f - (x))
-
-// static const GLfloat globBoxVertexData[] = {
-//    //   X     Y     Z       U        V
-//    // front
-//    1.0f,    1.0f,    1.0f, U(1.0f), V(1.0f), -1.0f,   1.0f,    1.0f,
-//    U(0.0f), V(1.0f), 1.0f, -1.0f,   1.0f,    U(1.0f), V(0.0f),
-
-//    // ....
-
-//};
-
-/// check opengl function
 #define GL_CHECK()                                                             \
     {                                                                          \
         const int err = static_cast<int>(glGetError());                        \
@@ -62,6 +50,22 @@ static void load_gl_func(const char* func_name, T& result)
     }
     result = reinterpret_cast<T>(gl_pointer);
 }
+
+//#define U(x) (x)
+//#define V(x) (1.0f - (x))
+
+// static const GLfloat globBoxVertexData[] = {
+//    //   X     Y     Z       U        V
+//    // front
+//    1.0f,    1.0f,    1.0f, U(1.0f), V(1.0f), -1.0f,   1.0f,    1.0f,
+//    U(0.0f), V(1.0f), 1.0f, -1.0f,   1.0f,    U(1.0f), V(0.0f),
+
+//    // ....
+
+//};
+
+/// check opengl function
+
 unsigned long text_width  = 0;
 unsigned long text_height = 0;
 triangle      transform_coord_to_GL(size_t tex_w, size_t tex_h, triangle t)
@@ -108,19 +112,25 @@ triangle      transform_coord_to_GL(size_t tex_w, size_t tex_h, triangle t)
 //}
 struct bind
 {
-    bind(SDL_Keycode _key, std::string_view _name)
+    bind(SDL_Keycode _key, std::string_view _name, keys _k)
         : key(_key)
         , name(_name)
+        , select_key(_k)
 
     {
     }
     SDL_Keycode      key;
     std::string_view name;
+    keys             select_key;
 };
-const std::array<bind, 5> keys{
-    bind{ SDLK_LEFT, "left" },   bind{ SDLK_DOWN, "down" },
-    bind{ SDLK_RIGHT, "right" }, bind{ SDLK_UP, "rotate" },
-    bind{ SDLK_SPACE, "pause" },
+
+const std::array<bind, 6> keys_list{
+    bind{ SDLK_LEFT, "left", keys::left },
+    bind{ SDLK_DOWN, "down", keys::down },
+    bind{ SDLK_RIGHT, "right", keys::right },
+    bind{ SDLK_UP, "rotate", keys::rotate },
+    bind{ SDLK_SPACE, "pause", keys::pause },
+    bind{ SDLK_ESCAPE, "exit", keys::exit },
 }
 
 ;
@@ -128,11 +138,11 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const ::bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys_list), end(keys_list),
+                [&](const ::bind& b) { return b.key == e.key.keysym.sym; });
 
-    if (it != end(keys))
+    if (it != end(keys_list))
     {
         result = &(*it);
         return true;
@@ -163,7 +173,121 @@ std::istream& operator>>(std::istream& is, triangle& t)
     is >> t.v[2];
     return is;
 }
+/// texture
+#pragma pack(push, 4)
 
+class texture_gl_es20 final : public texture
+{
+public:
+    explicit texture_gl_es20(std::string_view path);
+    texture_gl_es20(const void* pixels, const size_t width,
+                    const size_t height);
+    ~texture_gl_es20() override;
+
+    void bind() const override;
+
+    std::uint32_t get_width() const final { return width; }
+    std::uint32_t get_height() const final { return height; }
+
+private:
+    void gen_texture_from_pixels(const void* pixels, const size_t width,
+                                 const size_t height);
+
+    std::string   file_path;
+    GLuint        tex_handl = 0;
+    std::uint32_t width     = 0;
+    std::uint32_t height    = 0;
+};
+#pragma pack(pop)
+
+static bool already_exist = false;
+
+/// texture impl
+texture::~texture() {}
+texture_gl_es20::texture_gl_es20(std::string_view path)
+    : file_path(path)
+{
+    std::vector<std::byte> png_file_in_memory;
+    std::ifstream          ifs(path.data(), std::ios_base::binary);
+    if (!ifs)
+    {
+        throw std::runtime_error("can't load texture");
+    }
+    ifs.seekg(0, std::ios_base::end);
+    std::streamoff pos_in_file = ifs.tellg();
+    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
+    ifs.seekg(0, std::ios_base::beg);
+    if (!ifs)
+    {
+        throw std::runtime_error("can't load texture");
+    }
+
+    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
+    if (!ifs.good())
+    {
+        throw std::runtime_error("can't load texture");
+    }
+
+    std::vector<std::byte> image;
+    unsigned long          w = 0;
+    unsigned long          h = 0;
+    int error                = decodePNG(image, w, h, &png_file_in_memory[0],
+                          png_file_in_memory.size(), false);
+
+    // if there's an error, display it
+    if (error != 0)
+    {
+        std::cerr << "error: " << error << std::endl;
+        throw std::runtime_error("can't load texture");
+    }
+
+    gen_texture_from_pixels(image.data(), w, h);
+}
+
+void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
+                                              const size_t w, const size_t h)
+{
+    glGenTextures(1, &tex_handl);
+    GL_CHECK()
+    glBindTexture(GL_TEXTURE_2D, tex_handl);
+    GL_CHECK();
+
+    GLint   mipmap_level = 0;
+    GLint   border       = 0;
+    GLsizei width_       = static_cast<GLsizei>(w);
+    GLsizei height_      = static_cast<GLsizei>(h);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
+                 GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    GL_CHECK();
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    GL_CHECK();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GL_CHECK();
+}
+
+texture_gl_es20::texture_gl_es20(const void* pixels, const size_t w,
+                                 const size_t h)
+{
+    gen_texture_from_pixels(pixels, w, h);
+    if (file_path.empty())
+    {
+        file_path = "::memory::";
+    }
+}
+
+texture_gl_es20::~texture_gl_es20()
+{
+    glDeleteTextures(1, &tex_handl);
+    GL_CHECK()
+}
+void texture_gl_es20::bind() const
+{
+    glBindTexture(GL_TEXTURE_2D, tex_handl);
+    GL_CHECK()
+}
+
+/// engine
 class engine_impl final : public engine
 {
 public:
@@ -244,7 +368,7 @@ varying vec2 v_tex_coord;
 void main()
 {
     v_tex_coord = vec2(a_tex_coord.x, a_tex_coord.y/7.0f);
-    gl_Position = vec4(a_position*1.f, 0.0, 1.0);
+    gl_Position = vec4(a_position, 0.0, 1.0);
 }
 )";
         const char* source        = vertex_source.data();
@@ -402,66 +526,75 @@ void main()
     bool load_texture(std::string_view path, unsigned long w,
                       unsigned long h) final
     {
-        // size_t                 i = std::filesystem::file_size(path);
-        std::vector<std::byte> png_file_in_memory;
-        std::ifstream          ifs(path.data(), std::ios::binary);
-        if (!ifs)
-        {
-            return false;
-        }
-        ifs.seekg(0, std::ios_base::end);
-        size_t pos_end_file = static_cast<size_t>(ifs.tellg());
-        png_file_in_memory.resize(pos_end_file);
-        ifs.seekg(0, std::ios_base::beg);
-        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
-                 static_cast<std::streamsize>(png_file_in_memory.size()));
-        if (!ifs.good())
-        {
-            return false;
-        }
-        // std::reverse(png_file_in_memory.begin(),
-        // png_file_in_memory.end());
+        //        // size_t                 i =
+        //        std::filesystem::file_size(path); std::vector<std::byte>
+        //        png_file_in_memory; std::ifstream          ifs(path.data(),
+        //        std::ios::binary); if (!ifs)
+        //        {
+        //            return false;
+        //        }
+        //        ifs.seekg(0, std::ios_base::end);
+        //        size_t pos_end_file = static_cast<size_t>(ifs.tellg());
+        //        png_file_in_memory.resize(pos_end_file);
+        //        ifs.seekg(0, std::ios_base::beg);
+        //        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
+        //                 static_cast<std::streamsize>(png_file_in_memory.size()));
+        //        if (!ifs.good())
+        //        {
+        //            return false;
+        //        }
+        //        // std::reverse(png_file_in_memory.begin(),
+        //        // png_file_in_memory.end());
 
-        //        unsigned long          w{ 0 };
-        //        unsigned long          h{ 0 };
-        std::vector<std::byte> image;
-        int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                              png_file_in_memory.size(), false);
-        if (0 != error)
-        {
-            std::cerr << "error: " << error << std::endl;
-            return false;
-        }
-        text_width       = w;
-        text_height      = h;
-        GLuint tex_handl = 0;
-        glGenTextures(1, &tex_handl);
-        GL_CHECK()
-        glBindTexture(GL_TEXTURE_2D, tex_handl);
-        GL_CHECK()
+        //        //        unsigned long          w{ 0 };
+        //        //        unsigned long          h{ 0 };
+        //        std::vector<std::byte> image;
+        //        int error = decodePNG(image, w, h, &png_file_in_memory[0],
+        //                              png_file_in_memory.size(), false);
+        //        if (0 != error)
+        //        {
+        //            std::cerr << "error: " << error << std::endl;
+        //            return false;
+        //        }
+        //        text_width       = w;
+        //        text_height      = h;
+        //        GLuint tex_handl = 0;
+        //        /// gen name for text
+        //        glGenTextures(1, &tex_handl);
+        //        GL_CHECK()
+        //        /// set current text
+        //        glBindTexture(GL_TEXTURE_2D, tex_handl);
+        //        GL_CHECK()
 
-        GLint mipmap_level = 0;
-        GLint border       = 0;
-        //происходит выделение памяти и загрузка в нее наших данных.
-        // clang-format off
-        glTexImage2D(GL_TEXTURE_2D, // Specifies the target texture of the active texture unit
-                     mipmap_level,  // Specifies the level-of-detail number. Level 0 is the base image level
-                     GL_RGBA,       // Specifies the internal format of the texture
-                     static_cast<GLsizei>(w),
-                     static_cast<GLsizei>(h),
-                     border,        // Specifies the width of the border. Must be 0. For GLES 2.0
-                     GL_RGBA,       // Specifies the format of the texel data. Must match internalformat
-                     GL_UNSIGNED_BYTE, // Specifies the data type of the texel data
-                     &image[0]);    // Specifies a pointer to the image data in memory
-        // clang-format on
-        GL_CHECK()
-        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-        //        GL_CLAMP_TO_EDGE); GL_CHECK() glTexParameteri(GL_TEXTURE_2D,
-        //        GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); GL_CHECK()
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        GL_CHECK()
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        GL_CHECK()
+        //        GLint mipmap_level = 0;
+        //        GLint border       = 0;
+        //        //происходит выделение памяти и загрузка в нее наших данных.
+        //        // clang-format off
+        //        glTexImage2D(GL_TEXTURE_2D, // Specifies the target texture of
+        //        the active texture unit
+        //                     mipmap_level,  // Specifies the level-of-detail
+        //                     number. Level 0 is the base image level GL_RGBA,
+        //                     // Specifies the internal format of the texture
+        //                     static_cast<GLsizei>(w),
+        //                     static_cast<GLsizei>(h),
+        //                     border,        // Specifies the width of the
+        //                     border. Must be 0. For GLES 2.0 GL_RGBA,       //
+        //                     Specifies the format of the texel data. Must
+        //                     match internalformat GL_UNSIGNED_BYTE, //
+        //                     Specifies the data type of the texel data
+        //                     &image[0]);    // Specifies a pointer to the
+        //                     image data in memory
+        //        // clang-format on
+        //        GL_CHECK()
+        //        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+        //        //        GL_CLAMP_TO_EDGE); GL_CHECK()
+        //        glTexParameteri(GL_TEXTURE_2D,
+        //        //        GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); GL_CHECK()
+
+        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+        //        GL_NEAREST); GL_CHECK() glTexParameteri(GL_TEXTURE_2D,
+        //        GL_TEXTURE_MAG_FILTER, GL_NEAREST); GL_CHECK()
+
         return true;
     }
     void render_triangle(triangle& t) override
@@ -513,6 +646,34 @@ void main()
         glDrawArrays(GL_TRIANGLES, 0, 3);
         GL_CHECK();
     }
+    void render_two_triangles(const std::vector<triangle>& v_in) override final
+    {
+
+        std::vector<triangle> t;
+        for (auto var : v_in)
+        {
+
+            triangle t1 = transform_coord_to_GL(text_width, text_height, var);
+            t.push_back(t1);
+        }
+
+        // vertex coordinates
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t[0].v[0].x);
+        GL_CHECK();
+        glEnableVertexAttribArray(0);
+        GL_CHECK();
+
+        // texture coordinates
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              &t[0].v[0].tx);
+        GL_CHECK();
+        glEnableVertexAttribArray(1);
+        GL_CHECK();
+        glDrawArrays(GL_TRIANGLES, 0, v_in.size() * 3);
+        GL_CHECK()
+    }
+
     void swap_buffer() override final
     {
         SDL_GL_SwapWindow(window);
@@ -522,57 +683,52 @@ void main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK()
     }
-    bool read_event(event& e) override final
-    {
 
+    bool read_event(keys& key) override final
+    {
         using namespace std;
-        // collect all events from SDL
         SDL_Event sdl_event;
-        if (SDL_WaitEvent(&sdl_event))
+        if (SDL_PollEvent(&sdl_event))
         {
             const ::bind* binding = nullptr;
 
             if (sdl_event.type == SDL_QUIT)
             {
-                e = event::turn_off;
+                key = keys::exit;
                 return true;
             }
             else if (sdl_event.type == SDL_KEYDOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
-                    // e = binding->event_pressed;
+                    key = binding->select_key;
                     return true;
                 }
             }
-            //            else if (sdl_event.type == SDL_KEYUP)
-            //            {
-            //                if (check_input(sdl_event, binding))
-            //                {
-            //                    e = binding->event_released;
-            //                    return true;
-            //                }
-            //}
-        }
-        return false;
-    }
-    bool read_input(int& key) override final
-    {
-        using namespace std;
-        SDL_Event sdl_event;
-        if (SDL_PollEvent(&sdl_event))
-        {
-            key = 1;
-
-            if (sdl_event.type == SDL_QUIT)
+            else if (sdl_event.type == SDL_KEYUP)
             {
-                key = 0;
-                return true;
+                if (check_input(sdl_event, binding))
+                {
+                    key = binding->select_key;
+                    return true;
+                }
             }
-        }
 
-        return false;
+            return false;
+        }
+        return true;
     }
+
+    texture* create_texture(std::string_view path) final
+    {
+        return new texture_gl_es20(path);
+    }
+    //    texture* create_texture_rgba32(const void* pixels, const size_t width,
+    //                                   const size_t height)
+    //    {
+    //        return new texture_gl_es20(pixels, width, height);
+    //    }
+    void destroy_texture(texture* t) final { delete t; }
 
 private:
     SDL_Window*   window      = nullptr;
@@ -580,8 +736,6 @@ private:
     GLuint        program_id_ = 0;
 };
 engine::~engine() {}
-
-static bool already_exist = false;
 
 engine* create_engine()
 {

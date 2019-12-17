@@ -1,11 +1,10 @@
 #pragma once
 
-#include <iosfwd>
+#include <exception>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include "picopng.hxx"
 
 constexpr int width = 640; // 640;
 constexpr int heigh = 480; // 480;
@@ -38,9 +37,9 @@ enum class keys
     left,
     right,
     down,
-
     rotate,
-    pause
+    pause,
+    exit
 };
 
 struct vec2
@@ -97,6 +96,31 @@ struct triangle
 std::istream& operator>>(std::istream& is, vertex& v);
 std::istream& operator>>(std::istream& is, triangle& t);
 
+class texture
+{
+public:
+    virtual ~texture();
+    virtual void          bind() const       = 0;
+    virtual std::uint32_t get_width() const  = 0;
+    virtual std::uint32_t get_height() const = 0;
+};
+
+class vertex_buffer
+{
+public:
+    virtual ~vertex_buffer();
+    virtual void          bind() const = 0;
+    virtual std::uint32_t size() const = 0;
+};
+
+class index_buffer
+{
+public:
+    virtual ~index_buffer();
+    virtual void          bind() const = 0;
+    virtual std::uint32_t size() const = 0;
+};
+
 class engine;
 
 engine* create_engine();
@@ -108,12 +132,22 @@ public:
     ~engine();
     virtual std::string initialize(std::string_view) = 0;
     virtual void        uninitialize()               = 0;
-    virtual bool        read_event(event& e)         = 0;
-    virtual bool        read_input(int&)             = 0;
+    virtual bool        read_event(keys& key)        = 0;
+    // virtual bool        check_input(keys&)           = 0;
 
-    virtual void render_triangle(triangle&)        = 0;
-    virtual void render_text_triangle(triangle& t) = 0;
-    virtual void swap_buffer()                     = 0;
+    //    virtual index_buffer* create_index_buffer(const std::uint16_t*,
+    //                                              std::size_t)    = 0;
+    //    virtual void          destroy_index_buffer(index_buffer*) = 0;
+
+    virtual texture* create_texture(std::string_view path) = 0;
+    //    virtual texture* create_texture_rgba32(const void*  pixels,
+    //                                           const size_t width,
+    //                                           const size_t height) = 0;
+    virtual void destroy_texture(texture* t)                          = 0;
+    virtual void render_triangle(triangle&)                           = 0;
+    virtual void render_text_triangle(triangle& t)                    = 0;
+    virtual void render_two_triangles(const std::vector<triangle>& v) = 0;
+    virtual void swap_buffer()                                        = 0;
     virtual bool load_texture(std::string_view path, unsigned long w,
-                              unsigned long h)     = 0;
+                              unsigned long h)                        = 0;
 };
