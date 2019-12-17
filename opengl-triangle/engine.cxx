@@ -1,7 +1,5 @@
 #include "engine.hxx"
-#include "SDL.h"
-#include "glad/glad.h"
-#include "picopng.hxx"
+#include "texture_gl_es20.hxx"
 
 #include <algorithm>
 #include <cassert>
@@ -10,46 +8,6 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
-#define GL_CHECK()                                                             \
-    {                                                                          \
-        const int err = static_cast<int>(glGetError());                        \
-        if (err != GL_NO_ERROR)                                                \
-        {                                                                      \
-            switch (err)                                                       \
-            {                                                                  \
-                case GL_INVALID_ENUM:                                          \
-                    std::cerr << GL_INVALID_ENUM << std::endl;                 \
-                    break;                                                     \
-                case GL_INVALID_VALUE:                                         \
-                    std::cerr << GL_INVALID_VALUE << std::endl;                \
-                    break;                                                     \
-                case GL_INVALID_OPERATION:                                     \
-                    std::cerr << GL_INVALID_OPERATION << std::endl;            \
-                    break;                                                     \
-                case GL_INVALID_FRAMEBUFFER_OPERATION:                         \
-                    std::cerr << GL_INVALID_FRAMEBUFFER_OPERATION              \
-                              << std::endl;                                    \
-                    break;                                                     \
-                case GL_OUT_OF_MEMORY:                                         \
-                    std::cerr << GL_OUT_OF_MEMORY << std::endl;                \
-                    break;                                                     \
-            }                                                                  \
-            assert(false);                                                     \
-        }                                                                      \
-    }
-
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
-{
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
-    if (nullptr == gl_pointer)
-    {
-        throw std::runtime_error(std::string("can't load GL function") +
-                                 func_name);
-    }
-    result = reinterpret_cast<T>(gl_pointer);
-}
 
 //#define U(x) (x)
 //#define V(x) (1.0f - (x))
@@ -173,119 +131,8 @@ std::istream& operator>>(std::istream& is, triangle& t)
     is >> t.v[2];
     return is;
 }
-/// texture
-#pragma pack(push, 4)
-
-class texture_gl_es20 final : public texture
-{
-public:
-    explicit texture_gl_es20(std::string_view path);
-    texture_gl_es20(const void* pixels, const size_t width,
-                    const size_t height);
-    ~texture_gl_es20() override;
-
-    void bind() const override;
-
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
-
-private:
-    void gen_texture_from_pixels(const void* pixels, const size_t width,
-                                 const size_t height);
-
-    std::string   file_path;
-    GLuint        tex_handl = 0;
-    std::uint32_t width     = 0;
-    std::uint32_t height    = 0;
-};
-#pragma pack(pop)
 
 static bool already_exist = false;
-
-/// texture impl
-texture::~texture() {}
-texture_gl_es20::texture_gl_es20(std::string_view path)
-    : file_path(path)
-{
-    std::vector<std::byte> png_file_in_memory;
-    std::ifstream          ifs(path.data(), std::ios_base::binary);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
-    ifs.seekg(0, std::ios_base::end);
-    std::streamoff pos_in_file = ifs.tellg();
-    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
-    ifs.seekg(0, std::ios_base::beg);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
-
-    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
-    if (!ifs.good())
-    {
-        throw std::runtime_error("can't load texture");
-    }
-
-    std::vector<std::byte> image;
-    unsigned long          w = 0;
-    unsigned long          h = 0;
-    int error                = decodePNG(image, w, h, &png_file_in_memory[0],
-                          png_file_in_memory.size(), false);
-
-    // if there's an error, display it
-    if (error != 0)
-    {
-        std::cerr << "error: " << error << std::endl;
-        throw std::runtime_error("can't load texture");
-    }
-
-    gen_texture_from_pixels(image.data(), w, h);
-}
-
-void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
-                                              const size_t w, const size_t h)
-{
-    glGenTextures(1, &tex_handl);
-    GL_CHECK()
-    glBindTexture(GL_TEXTURE_2D, tex_handl);
-    GL_CHECK();
-
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width_       = static_cast<GLsizei>(w);
-    GLsizei height_      = static_cast<GLsizei>(h);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    GL_CHECK();
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GL_CHECK();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GL_CHECK();
-}
-
-texture_gl_es20::texture_gl_es20(const void* pixels, const size_t w,
-                                 const size_t h)
-{
-    gen_texture_from_pixels(pixels, w, h);
-    if (file_path.empty())
-    {
-        file_path = "::memory::";
-    }
-}
-
-texture_gl_es20::~texture_gl_es20()
-{
-    glDeleteTextures(1, &tex_handl);
-    GL_CHECK()
-}
-void texture_gl_es20::bind() const
-{
-    glBindTexture(GL_TEXTURE_2D, tex_handl);
-    GL_CHECK()
-}
 
 /// engine
 class engine_impl final : public engine

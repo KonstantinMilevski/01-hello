@@ -6,8 +6,8 @@ add_library(engine SHARED engine.cxx
                                engine.hxx
                                glad/glad.h
                                glad/glad.c
-#                               texture_gl_es20.cxx
-#                               texture_gl_es20.hxx
+                               texture_gl_es20.cxx
+                               texture_gl_es20.hxx
                                picopng.hxx)
 
 target_compile_features(engine PUBLIC cxx_std_17)

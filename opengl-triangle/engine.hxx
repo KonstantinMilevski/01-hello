@@ -6,6 +6,48 @@
 #include <string_view>
 #include <vector>
 
+#include "glad/glad.h"
+#include <SDL2/SDL.h>
+
+#define GL_CHECK()                                                             \
+    {                                                                          \
+        const int err = static_cast<int>(glGetError());                        \
+        if (err != GL_NO_ERROR)                                                \
+        {                                                                      \
+            switch (err)                                                       \
+            {                                                                  \
+                case GL_INVALID_ENUM:                                          \
+                    std::cerr << GL_INVALID_ENUM << std::endl;                 \
+                    break;                                                     \
+                case GL_INVALID_VALUE:                                         \
+                    std::cerr << GL_INVALID_VALUE << std::endl;                \
+                    break;                                                     \
+                case GL_INVALID_OPERATION:                                     \
+                    std::cerr << GL_INVALID_OPERATION << std::endl;            \
+                    break;                                                     \
+                case GL_INVALID_FRAMEBUFFER_OPERATION:                         \
+                    std::cerr << GL_INVALID_FRAMEBUFFER_OPERATION              \
+                              << std::endl;                                    \
+                    break;                                                     \
+                case GL_OUT_OF_MEMORY:                                         \
+                    std::cerr << GL_OUT_OF_MEMORY << std::endl;                \
+                    break;                                                     \
+            }                                                                  \
+            assert(false);                                                     \
+        }                                                                      \
+    }
+
+template <typename T>
+static void load_gl_func(const char* func_name, T& result)
+{
+    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    if (nullptr == gl_pointer)
+    {
+        throw std::runtime_error(std::string("can't load GL function") +
+                                 func_name);
+    }
+    result = reinterpret_cast<T>(gl_pointer);
+}
 constexpr int width = 640; // 640;
 constexpr int heigh = 480; // 480;
 
