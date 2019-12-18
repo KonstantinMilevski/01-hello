@@ -6,7 +6,6 @@
 #include <cassert>
 #include <exception>
 #include <iostream>
-#include <sstream>
 
 /// texture
 #pragma pack(push, 4)

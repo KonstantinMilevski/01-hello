@@ -92,6 +92,7 @@ int main()
     }
 
     texture* texture = engine->create_texture("tank.png");
+
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
