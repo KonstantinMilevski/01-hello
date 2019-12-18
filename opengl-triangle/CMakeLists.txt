@@ -8,6 +8,8 @@ add_library(engine SHARED engine.cxx
                                glad/glad.c
                                texture_gl_es20.cxx
                                texture_gl_es20.hxx
+                               vertex_buffer_impl.cxx
+                               vertex_buffer_impl.hxx
                                picopng.hxx)
 
 target_compile_features(engine PUBLIC cxx_std_17)

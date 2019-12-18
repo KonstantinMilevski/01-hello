@@ -9,13 +9,12 @@
 
 /// texture
 #pragma pack(push, 4)
-
 class texture_gl_es20 final : public texture
 {
 public:
     explicit texture_gl_es20(std::string_view path);
-    texture_gl_es20(const void* pixels, const size_t width,
-                    const size_t height);
+    texture_gl_es20(std::string_view path, const size_t w_new,
+                    const size_t h_new);
     ~texture_gl_es20() override;
 
     void bind() const override;

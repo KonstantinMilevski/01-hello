@@ -91,7 +91,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    texture* texture = engine->create_texture("tank.png");
+    texture* texture = engine->create_texture("blocks1.png");
 
     if (nullptr == texture)
     {

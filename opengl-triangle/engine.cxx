@@ -1,5 +1,6 @@
 #include "engine.hxx"
 #include "texture_gl_es20.hxx"
+#include "vertex_buffer_impl.hxx"
 
 #include <algorithm>
 #include <cassert>
@@ -570,12 +571,24 @@ void main()
     {
         return new texture_gl_es20(path);
     }
-    //    texture* create_texture_rgba32(const void* pixels, const size_t width,
-    //                                   const size_t height)
-    //    {
-    //        return new texture_gl_es20(pixels, width, height);
-    //    }
+    texture* create_texture_part(std::string_view path, const size_t width,
+                                 const size_t height)
+    {
+        return new texture_gl_es20(path, width, height);
+    }
     void destroy_texture(texture* t) final { delete t; }
+    /// create_vertex_buffer
+    vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
+    {
+        assert(triangles != nullptr);
+        return new vertex_buffer_impl(triangles, n);
+    }
+    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    {
+        assert(vert != nullptr);
+        return new vertex_buffer_impl(vert, count);
+    }
+    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
 
 private:
     SDL_Window*   window      = nullptr;

@@ -134,6 +134,16 @@ struct triangle
     }
     vertex v[3];
 };
+struct v2
+{
+    vec2 pos;
+    vec2 uv;
+};
+struct tri2
+{
+    tri2();
+    v2 v[3];
+};
 
 std::istream& operator>>(std::istream& is, vertex& v);
 std::istream& operator>>(std::istream& is, triangle& t);
@@ -181,15 +191,19 @@ public:
     //                                              std::size_t)    = 0;
     //    virtual void          destroy_index_buffer(index_buffer*) = 0;
 
-    virtual texture* create_texture(std::string_view path) = 0;
-    //    virtual texture* create_texture_rgba32(const void*  pixels,
-    //                                           const size_t width,
-    //                                           const size_t height) = 0;
-    virtual void destroy_texture(texture* t)                          = 0;
-    virtual void render_triangle(triangle&)                           = 0;
-    virtual void render_text_triangle(triangle& t)                    = 0;
-    virtual void render_two_triangles(const std::vector<triangle>& v) = 0;
-    virtual void swap_buffer()                                        = 0;
-    virtual bool load_texture(std::string_view path, unsigned long w,
-                              unsigned long h)                        = 0;
+    virtual vertex_buffer* create_vertex_buffer(const tri2*, std::size_t) = 0;
+    virtual vertex_buffer* create_vertex_buffer(const v2*, std::size_t)   = 0;
+    virtual void           destroy_vertex_buffer(vertex_buffer*)          = 0;
+
+    virtual texture* create_texture(std::string_view path)                = 0;
+    virtual texture* create_texture_part(std::string_view path,
+                                         const size_t     width,
+                                         const size_t     height)             = 0;
+    virtual void     destroy_texture(texture* t)                          = 0;
+    virtual void     render_triangle(triangle&)                           = 0;
+    virtual void     render_text_triangle(triangle& t)                    = 0;
+    virtual void     render_two_triangles(const std::vector<triangle>& v) = 0;
+    virtual void     swap_buffer()                                        = 0;
+    virtual bool     load_texture(std::string_view path, unsigned long w,
+                                  unsigned long h)                        = 0;
 };
