@@ -1,4 +1,5 @@
 #include "engine.hxx"
+#include "shader_gl_es20.hxx"
 #include "texture_gl_es20.hxx"
 #include "vertex_buffer_impl.hxx"
 
@@ -591,9 +592,10 @@ void main()
     void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
 
 private:
-    SDL_Window*   window      = nullptr;
-    SDL_GLContext gl_context  = nullptr;
-    GLuint        program_id_ = 0;
+    SDL_Window*     window      = nullptr;
+    SDL_GLContext   gl_context  = nullptr;
+    GLuint          program_id_ = 0;
+    shader_gl_es20* shader00    = nullptr;
 };
 engine::~engine() {}
 

@@ -10,6 +10,8 @@ add_library(engine SHARED engine.cxx
                                texture_gl_es20.hxx
                                vertex_buffer_impl.cxx
                                vertex_buffer_impl.hxx
+                               shader_gl_es20.cxx
+                               shader_gl_es20.hxx
                                picopng.hxx)
 
 target_compile_features(engine PUBLIC cxx_std_17)
