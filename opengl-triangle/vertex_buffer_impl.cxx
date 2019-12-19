@@ -1,29 +1,20 @@
 #include "vertex_buffer_impl.hxx"
 
-vertex_buffer::~vertex_buffer() {}
 vertex_buffer_impl::vertex_buffer_impl(const tri2* tri, std::size_t n)
-    : count(static_cast<std::uint32_t>(n * 3))
+    : triangles(n)
 {
-    glGenBuffers(1, &gl_handle);
-    GL_CHECK()
-
-    bind();
-
-    GLsizeiptr size_in_bytes = static_cast<GLsizeiptr>(n * 3 * sizeof(v2));
-
-    glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &tri->v[0], GL_STATIC_DRAW);
-    GL_CHECK()
+    assert(tri != nullptr);
+    for (size_t i = 0; i < n; ++i)
+    {
+        triangles.push_back(tri[i]);
+    }
 }
-vertex_buffer_impl::vertex_buffer_impl(const v2* vert, std::size_t n)
-    : count(static_cast<std::uint32_t>(n))
+
+const v2* vertex_buffer_impl::data() const
 {
-    glGenBuffers(1, &gl_handle);
-    GL_CHECK()
-
-    bind();
-
-    GLsizeiptr size_in_bytes = static_cast<GLsizeiptr>(n * sizeof(v2));
-
-    glBufferData(GL_ARRAY_BUFFER, size_in_bytes, vert, GL_STATIC_DRAW);
-    GL_CHECK()
+    return &triangles.data()->v[0];
+}
+size_t vertex_buffer_impl::size() const
+{
+    return triangles.size() * 3;
 }

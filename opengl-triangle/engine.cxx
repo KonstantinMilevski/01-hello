@@ -28,25 +28,7 @@
 
 unsigned long text_width  = 0;
 unsigned long text_height = 0;
-triangle      transform_coord_to_GL(size_t tex_w, size_t tex_h, triangle t)
-{
-    triangle n;
 
-    n.v[0].x = t.v[0].x * 2 / width - 1.0f;
-    n.v[0].y = t.v[0].y * 2 / heigh - 1.0f;
-    n.v[1].x = t.v[1].x * 2 / width - 1.0f;
-    n.v[1].y = t.v[1].y * 2 / heigh - 1.0f;
-    n.v[2].x = t.v[2].x * 2 / width - 1.0f;
-    n.v[2].y = t.v[2].y * 2 / heigh - 1.0f;
-
-    n.v[0].tx = t.v[0].tx / tex_w;
-    n.v[0].ty = t.v[0].ty / tex_h;
-    n.v[1].tx = t.v[1].tx / tex_w;
-    n.v[1].ty = t.v[1].ty / tex_h;
-    n.v[2].tx = t.v[2].tx / tex_w;
-    n.v[2].ty = t.v[2].ty / tex_h;
-    return n;
-}
 /// kod for SDL_events
 // static std::array<std::string_view, 17> event_names = {
 //    /// input events
@@ -134,9 +116,37 @@ std::istream& operator>>(std::istream& is, triangle& t)
     return is;
 }
 
-static bool already_exist = false;
+tri2::tri2()
+    : v{ v2(), v2(), v2() }
+{
+}
+tri2::tri2(v2 v01, v2 v02, v2 v03)
+    : v{ v2(v01), v2(v02), v2(v03) }
+{
+}
+std::istream& operator>>(std::istream& is, v2& v)
+{
+    is >> v.pos.x;
+    is >> v.pos.y;
+    is >> v.uv.x;
+    is >> v.uv.y;
+    return is;
+}
+std::istream& operator>>(std::istream& is, tri2& t)
+{
+    is >> t.v[0];
+    is >> t.v[1];
+    is >> t.v[2];
+    return is;
+}
 
+///
+vertex_buffer::~vertex_buffer() {}
+texture::~texture() {}
+engine::~engine() {}
 /// engine
+
+/// engine_impl
 class engine_impl final : public engine
 {
 public:
@@ -206,168 +216,219 @@ public:
         {
             std::cerr << "error: failed to initialize glad" << std::endl;
         }
+        /// glGenBuffers
+        glGenBuffers(1, &gl_default_vbo);
+        GL_CHECK()
+        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+        GL_CHECK()
+        uint32_t data_size_in_bytes = 0;
+        glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, nullptr,
+                     GL_STATIC_DRAW);
+        GL_CHECK()
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, nullptr);
+        GL_CHECK()
+
+        shader00 = new shader_gl_es20(
+            R"(
+                attribute vec2 a_position;
+                attribute vec2 a_tex_coord;
+                //attribute vec4 a_color;
+                //varying vec4 v_color;
+                varying vec2 v_tex_coord;
+                void main()
+                {
+                v_tex_coord = a_tex_coord;
+                //v_color = a_color;
+                gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+                )",
+            R"(
+                #ifdef GL_ES
+                precision mediump float;
+                #endif
+                varying vec2 v_tex_coord;
+                //varying vec4 v_color;
+                uniform sampler2D s_texture;
+                void main()
+                {
+                gl_FragColor = texture2D(s_texture, v_tex_coord); //* v_color;
+                }
+                )",
+            { { 0, "a_position" },
+              //{ 1, "a_color" },
+              { 2, "a_tex_coord" } });
+
+        // turn on rendering with just created shader program
+        shader00->use();
+        /// end glGenBuffers
 
         // create vertex shader
-        GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        GL_CHECK();
-        string_view vertex_source = R"(
-attribute vec2 a_position;
-attribute vec2 a_tex_coord;
-varying vec2 v_tex_coord;
-void main()
-{
-    v_tex_coord = vec2(a_tex_coord.x, a_tex_coord.y/7.0f);
-    gl_Position = vec4(a_position, 0.0, 1.0);
-}
-)";
-        const char* source        = vertex_source.data();
-        glShaderSource(vertex_shader, 1, &source, nullptr);
-        GL_CHECK();
-
-        glCompileShader(vertex_shader);
-        GL_CHECK();
-
-        GLint compiled_status = 0;
-        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled_status);
-        GL_CHECK()
-        if (compiled_status == 0)
-        {
-            GLint info_len = 0;
-            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &info_len);
-            GL_CHECK()
-            std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(vertex_shader, info_len, nullptr,
-                               info_chars.data());
-            GL_CHECK()
-            glDeleteShader(vertex_shader);
-            GL_CHECK()
-
-            serr << "Error compiling shader(vertex)\n"
-                 << vertex_source << "\n"
-                 << info_chars.data();
-            return serr.str();
-        }
-
-        // create fragment shader
-
-        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        GL_CHECK();
-        string_view fragment_source = R"(
-varying vec2 v_tex_coord;
-uniform sampler2D s_texture;
-void main()
-{
-    gl_FragColor = texture2D(s_texture, v_tex_coord);
-}
-)";
-        source                      = fragment_source.data();
-        glShaderSource(fragment_shader, 1, &source, nullptr);
-        GL_CHECK();
-
-        glCompileShader(fragment_shader);
-        GL_CHECK();
-
-        compiled_status = 0;
-        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled_status);
-        GL_CHECK()
-        if (compiled_status == 0)
-        {
-            GLint info_len = 0;
-            glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
-            GL_CHECK()
-            std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(fragment_shader, info_len, nullptr,
-                               info_chars.data());
-            GL_CHECK()
-            glDeleteShader(fragment_shader);
-            GL_CHECK()
-
-            serr << "Error compiling shader(fragment)\n"
-                 << fragment_source << "\n"
-                 << info_chars.data();
-            return serr.str();
-        }
-
-        // create program and attach vertex and fragment shaders
-
-        program_id_ = glCreateProgram();
-        GL_CHECK()
-        if (0 == program_id_)
-        {
-            cerr << "error: can't create GL_program";
-            return serr.str();
-        }
-
-        glAttachShader(program_id_, vertex_shader);
-        GL_CHECK()
-
-        glAttachShader(program_id_, fragment_shader);
-        GL_CHECK()
-
-        glBindAttribLocation(program_id_, 0, "a_position");
-        GL_CHECK()
-
-        glLinkProgram(program_id_);
-        GL_CHECK()
-
-        GLint linked_status = 0;
-        glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-        GL_CHECK()
-        if (linked_status == 0)
-        {
-            GLint infoLen = 0;
-            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            GL_CHECK()
-            std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-            GL_CHECK()
-            serr << "Error linking program:\n" << infoLog.data();
-            glDeleteProgram(program_id_);
-            GL_CHECK()
-            return serr.str();
-        }
-        glDeleteShader(vertex_shader);
-        GL_CHECK()
-        glDeleteShader(fragment_shader);
-        GL_CHECK()
-        glUseProgram(program_id_);
-        GL_CHECK()
-
-        ///
-        int location = glGetUniformLocation(program_id_, "s_texture");
-        GL_CHECK();
-        assert(-1 != location);
-        int texture_unit = 0;
-        glActiveTexture(GL_TEXTURE0 + texture_unit);
-        GL_CHECK();
-        unsigned long w{ 0 };
-        unsigned long h{ 0 };
-        if (!load_texture("blocks1.png", w, h))
-        {
-            return "failed load texture\n";
-        }
-
-        // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
-        glUniform1i(location, 0 + texture_unit);
-        GL_CHECK();
-
-        // glEnable(SDL_GL_DOUBLEBUFFER);
-        glEnable(GL_DEPTH_TEST);
-        // glDepthFunc(GL_LESS);
-
-        //        glEnable(GL_BLEND);
+        //        GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         //        GL_CHECK();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK();
-        ///
-        glEnable(GL_DEPTH_TEST);
-        GL_CHECK()
+        //        string_view vertex_source = R"(
+        //                                        attribute vec2 a_position;
+        //                                        attribute vec2 a_tex_coord;
+        //                                        varying vec2 v_tex_coord;
+        //                                        void main()
+        //                                        {
+        //                                            v_tex_coord =
+        //                                            vec2(a_tex_coord.x,
+        //                                            a_tex_coord.y/7.0f);
+        //                                            gl_Position =
+        //                                            vec4(a_position,
+        //                                            0.0, 1.0);
+        //                                        }
+        //                                        )";
+        //        const char* source        = vertex_source.data();
+        //        glShaderSource(vertex_shader, 1, &source, nullptr);
+        //        GL_CHECK();
+
+        //        glCompileShader(vertex_shader);
+        //        GL_CHECK();
+
+        //        GLint compiled_status = 0;
+        //        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS,
+        //        &compiled_status); GL_CHECK() if (compiled_status == 0)
+        //        {
+        //            GLint info_len = 0;
+        //            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH,
+        //            &info_len); GL_CHECK() std::vector<char>
+        //            info_chars(static_cast<size_t>(info_len));
+        //            glGetShaderInfoLog(vertex_shader, info_len, nullptr,
+        //                               info_chars.data());
+        //            GL_CHECK()
+        //            glDeleteShader(vertex_shader);
+        //            GL_CHECK()
+
+        //            serr << "Error compiling shader(vertex)\n"
+        //                 << vertex_source << "\n"
+        //                 << info_chars.data();
+        //            return serr.str();
+        //        }
+
+        //        // create fragment shader
+
+        //        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+        //        GL_CHECK();
+        //        string_view fragment_source = R"(
+        //                                        varying vec2 v_tex_coord;
+        //                                        uniform sampler2D s_texture;
+        //                                        void main()
+        //                                        {
+        //                                            gl_FragColor =
+        //                                            texture2D(s_texture,
+        //                                            v_tex_coord);
+        //                                        }
+        //                                        )";
+        //        source                      = fragment_source.data();
+        //        glShaderSource(fragment_shader, 1, &source, nullptr);
+        //        GL_CHECK();
+
+        //        glCompileShader(fragment_shader);
+        //        GL_CHECK();
+
+        //        compiled_status = 0;
+        //        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS,
+        //        &compiled_status); GL_CHECK() if (compiled_status == 0)
+        //        {
+        //            GLint info_len = 0;
+        //            glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH,
+        //            &info_len); GL_CHECK() std::vector<char>
+        //            info_chars(static_cast<size_t>(info_len));
+        //            glGetShaderInfoLog(fragment_shader, info_len, nullptr,
+        //                               info_chars.data());
+        //            GL_CHECK()
+        //            glDeleteShader(fragment_shader);
+        //            GL_CHECK()
+
+        //            serr << "Error compiling shader(fragment)\n"
+        //                 << fragment_source << "\n"
+        //                 << info_chars.data();
+        //            return serr.str();
+        //        }
+
+        //        // create program and attach vertex and fragment shaders
+
+        //        program_id_ = glCreateProgram();
+        //        GL_CHECK()
+        //        if (0 == program_id_)
+        //        {
+        //            cerr << "error: can't create GL_program";
+        //            return serr.str();
+        //        }
+
+        //        glAttachShader(program_id_, vertex_shader);
+        //        GL_CHECK()
+
+        //        glAttachShader(program_id_, fragment_shader);
+        //        GL_CHECK()
+
+        //        glBindAttribLocation(program_id_, 0, "a_position");
+        //        GL_CHECK()
+
+        //        glLinkProgram(program_id_);
+        //        GL_CHECK()
+
+        //        GLint linked_status = 0;
+        //        glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
+        //        GL_CHECK()
+        //        if (linked_status == 0)
+        //        {
+        //            GLint infoLen = 0;
+        //            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+        //            GL_CHECK()
+        //            std::vector<char> infoLog(static_cast<size_t>(infoLen));
+        //            glGetProgramInfoLog(program_id_, infoLen, nullptr,
+        //            infoLog.data()); GL_CHECK() serr << "Error linking
+        //            program:\n" << infoLog.data();
+        //            glDeleteProgram(program_id_);
+        //            GL_CHECK()
+        //            return serr.str();
+        //        }
+        //        glDeleteShader(vertex_shader);
+        //        GL_CHECK()
+        //        glDeleteShader(fragment_shader);
+        //        GL_CHECK()
+        //        glUseProgram(program_id_);
+        //        GL_CHECK()
+
+        //        ///
+        //        int location = glGetUniformLocation(program_id_, "s_texture");
+        //        GL_CHECK();
+        //        assert(-1 != location);
+        //        int texture_unit = 0;
+        //        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        //        GL_CHECK();
+        //        unsigned long w{ 0 };
+        //        unsigned long h{ 0 };
+        //        if (!load_texture("blocks1.png", w, h))
+        //        {
+        //            return "failed load texture\n";
+        //        }
+
+        //        //
+        //        http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
+        //        glUniform1i(location, 0 + texture_unit);
+        //        GL_CHECK();
+
+        //        // glEnable(SDL_GL_DOUBLEBUFFER);
+        //        glEnable(GL_DEPTH_TEST);
+        //        // glDepthFunc(GL_LESS);
+
+        //        //        glEnable(GL_BLEND);
+        //        //        GL_CHECK();
+        //        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //        GL_CHECK();
+        //        ///
+        //        glEnable(GL_DEPTH_TEST);
+        //        GL_CHECK()
 
         return "";
     }
     void uninitialize() override final
     {
         // glDeleteProgram(program_id_);
+        delete shader00;
         SDL_GL_DeleteContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -449,77 +510,148 @@ void main()
     void render_triangle(triangle& t) override
     {
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0]);
-        GL_CHECK()
-        // first attribute - vertex
-        glEnableVertexAttribArray(0);
-        GL_CHECK()
-        glValidateProgram(program_id_);
-        GL_CHECK()
-        // Check the validate status
-        GLint validate_status = 0;
-        glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
-        GL_CHECK()
-        if (validate_status == GL_FALSE)
-        {
-            GLint infoLen = 0;
-            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            GL_CHECK()
-            std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-            GL_CHECK()
-            std::cerr << "Error linking program:\n" << infoLog.data();
-            throw std::runtime_error("error");
-        }
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        GL_CHECK()
+        //        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(vertex),
+        //                              &t.v[0]);
+        //        GL_CHECK()
+        //        // first attribute - vertex
+        //        glEnableVertexAttribArray(0);
+        //        GL_CHECK()
+        //        glValidateProgram(program_id_);
+        //        GL_CHECK()
+        //        // Check the validate status
+        //        GLint validate_status = 0;
+        //        glGetProgramiv(program_id_, GL_VALIDATE_STATUS,
+        //        &validate_status); GL_CHECK() if (validate_status == GL_FALSE)
+        //        {
+        //            GLint infoLen = 0;
+        //            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+        //            GL_CHECK()
+        //            std::vector<char> infoLog(static_cast<size_t>(infoLen));
+        //            glGetProgramInfoLog(program_id_, infoLen, nullptr,
+        //            infoLog.data()); GL_CHECK() std::cerr << "Error linking
+        //            program:\n" << infoLog.data(); throw
+        //            std::runtime_error("error");
+        //        }
+        //        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //        GL_CHECK()
     }
-    void render_text_triangle(triangle& t_in) override
+    void render_text_triangle(triangle& t) override
     {
-        triangle t = transform_coord_to_GL(text_width, text_height, t_in);
-        // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0].x);
-        GL_CHECK();
-        glEnableVertexAttribArray(0);
-        GL_CHECK();
+        //        triangle t = transform_coord_to_GL(text_width, text_height,
+        //        t_in);
+        //        // vertex coordinates
+        //        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(vertex),
+        //                              &t.v[0].x);
+        //        GL_CHECK();
+        //        glEnableVertexAttribArray(0);
+        //        GL_CHECK();
 
-        // texture coordinates
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0].tx);
-        GL_CHECK();
-        glEnableVertexAttribArray(1);
-        GL_CHECK();
+        //        // texture coordinates
+        //        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(vertex),
+        //                              &t.v[0].tx);
+        //        GL_CHECK();
+        //        glEnableVertexAttribArray(1);
+        //        GL_CHECK();
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        GL_CHECK();
+        //        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //        GL_CHECK();
     }
     void render_two_triangles(const std::vector<triangle>& v_in) override final
     {
 
-        std::vector<triangle> t;
-        for (auto var : v_in)
-        {
+        //        std::vector<triangle> t;
+        //        for (auto var : v_in)
+        //        {
 
-            triangle t1 = transform_coord_to_GL(text_width, text_height, var);
-            t.push_back(t1);
-        }
+        //            triangle t1 = transform_coord_to_GL(text_width,
+        //            text_height, var); t.push_back(t1);
+        //        }
 
-        // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t[0].v[0].x);
-        GL_CHECK();
+        //        // vertex coordinates
+        //        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(vertex),
+        //                              &t[0].v[0].x);
+        //        GL_CHECK();
+        //        glEnableVertexAttribArray(0);
+        //        GL_CHECK();
+
+        //        // texture coordinates
+        //        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(vertex),
+        //                              &t[0].v[0].tx);
+        //        GL_CHECK();
+        //        glEnableVertexAttribArray(1);
+        //        GL_CHECK();
+        //        glDrawArrays(GL_TRIANGLES, 0, v_in.size() * 3);
+        //        GL_CHECK()
+    }
+
+    void render_tetris(const vertex_buffer& buff, texture* tex) final
+    {
+
+        shader00->use();
+        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        texture->bind();
+        shader00->set_uniform("s_texture", texture);
+
+        /// generate a new VBO and get the associated ID
+        glGenBuffers(1, &gl_default_vbo);
+        GL_CHECK()
+
+        assert(gl_default_vbo != 0);
+        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+        GL_CHECK()
+
+        const v2* t = buff.data();
+        uint32_t  data_size_in_bytes =
+            static_cast<uint32_t>(buff.size() * sizeof(v2));
+        /// copy the data into the buffer object, when the buffer has been
+        /// initialized
+        glBufferData(
+            GL_ARRAY_BUFFER, data_size_in_bytes,
+            t, /// Specifies a pointer to data that will be copied into the data
+            /// store for initialization, or NULL if no data is to be copied.
+            GL_DYNAMIC_DRAW /// Specifies the expected usage pattern of the data
+            /// store
+        );
+        GL_CHECK()
+        /// update a subset of a buffer object's data store
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
+        GL_CHECK()
+
+        // positions
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), nullptr);
+
+        GL_CHECK()
         glEnableVertexAttribArray(0);
-        GL_CHECK();
+        GL_CHECK()
+        // colors
+        //        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+        //        sizeof(t.v[0]),
+        //                              &t.v[0].c);
+        //        GL_CHECK()
+        //        glEnableVertexAttribArray(1);
+        //        GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t[0].v[0].tx);
-        GL_CHECK();
-        glEnableVertexAttribArray(1);
-        GL_CHECK();
-        glDrawArrays(GL_TRIANGLES, 0, v_in.size() * 3);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
+                              reinterpret_cast<void*>(sizeof(v2::pos)));
+        //        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
+        //        sizeof(t.v[0]),
+        //                              &t.v[0].uv);
+        GL_CHECK()
+        glEnableVertexAttribArray(2);
+        GL_CHECK()
+
+        glDrawArrays(GL_TRIANGLES, 0, buff.size());
+        GL_CHECK()
+
+        //        glDisableVertexAttribArray(1);
+        //        GL_CHECK()
+        glDisableVertexAttribArray(2);
         GL_CHECK()
     }
 
@@ -578,28 +710,30 @@ void main()
         return new texture_gl_es20(path, width, height);
     }
     void destroy_texture(texture* t) final { delete t; }
+
     /// create_vertex_buffer
     vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
     {
         assert(triangles != nullptr);
         return new vertex_buffer_impl(triangles, n);
     }
-    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
-    {
-        assert(vert != nullptr);
-        return new vertex_buffer_impl(vert, count);
-    }
+    //    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    //    {
+    //        assert(vert != nullptr);
+    //        return new vertex_buffer_impl(vert, count);
+    //    }
     void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
 
 private:
-    SDL_Window*     window      = nullptr;
-    SDL_GLContext   gl_context  = nullptr;
-    GLuint          program_id_ = 0;
-    shader_gl_es20* shader00    = nullptr;
+    SDL_Window*     window         = nullptr;
+    SDL_GLContext   gl_context     = nullptr;
+    GLuint          program_id_    = 0;
+    shader_gl_es20* shader00       = nullptr;
+    uint32_t        gl_default_vbo = 0;
 };
-engine::~engine() {}
 
-engine* create_engine()
+static bool already_exist = false;
+engine*     create_engine()
 {
     if (true == already_exist)
     {

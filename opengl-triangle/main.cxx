@@ -1,11 +1,11 @@
+#include "engine.hxx"
+#include "texture_gl_es20.hxx"
+
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <memory>
 
-#include "engine.hxx"
-
-void      transform_coor();
 const int m             = 10;
 const int n             = 10;
 int       fild[m][n]    = { 0 };
@@ -19,12 +19,12 @@ int       figures[7][4] = {
     2, 3, 4, 5, // O
 };
 const int text_size = 18;
-const int quad_size = 18;
+const int quad_size = 36;
 vec2      a[4], b[4];
 
-void draw_one_fig(std::vector<triangle>& vec_tr)
+void draw_one_fig(std::vector<tri2>& vec_tr) // set all triangles for 1 figure
 {
-    // std::vector<triangle> vec_tr;
+
     int n = 3; // задаём тип тетрамино
     for (int i = 0; i < 4; i++)
     {
@@ -39,13 +39,13 @@ void draw_one_fig(std::vector<triangle>& vec_tr)
     for (int i = 0; i < 4; i++)
 
     {
-        vertex   v0{ b[i].x, b[i].y, 0, 0 };
-        vertex   v1{ b[i].x, b[i].y + quad_size, 0, text_size };
-        vertex   v2{ b[i].x + quad_size, b[i].y + quad_size, text_size,
-                   text_size };
-        vertex   v3{ b[i].x + quad_size, b[i].y, text_size, 0 };
-        triangle t0(v0, v1, v2);
-        triangle t1(v3, v0, v2);
+
+        v2 v01{ b[i].x, b[i].y, 0, 0 };
+        v2 v02{ b[i].x, b[i].y + quad_size, 0, text_size };
+        v2 v03{ b[i].x + quad_size, b[i].y + quad_size, text_size, text_size };
+        v2 v04{ b[i].x + quad_size, b[i].y, text_size, 0 };
+        tri2 t0(v01, v02, v03);
+        tri2 t1(v04, v02, v03);
         vec_tr.push_back(t0);
         vec_tr.push_back(t1);
     }
@@ -57,23 +57,45 @@ void draw_one_fig(std::vector<triangle>& vec_tr)
     //         window.draw(sprite);
     //    }
 }
-triangle scale_size(size_t w, size_t h, triangle t)
-{
-    triangle n;
-    float    a = static_cast<float>(w / h);
-    n.v[0].x   = t.v[0].x;
-    n.v[0].y   = t.v[0].y / 3.5;
-    n.v[1].x   = t.v[1].x;
-    n.v[1].y   = t.v[1].y / 3.5;
-    n.v[2].x   = t.v[2].x;
-    n.v[2].y   = t.v[2].y / 3.5;
+// tri2 scale_size(size_t w, size_t h, tri2 t)
+//{
+//    tri2  n;
+//    float a = static_cast<float>(w / h);
 
-    n.v[0].tx = t.v[0].tx;
-    n.v[0].ty = t.v[0].ty * a;
-    n.v[1].tx = t.v[1].tx;
-    n.v[1].ty = t.v[1].ty * a;
-    n.v[2].tx = t.v[2].tx;
-    n.v[2].ty = t.v[2].ty * a;
+//    n.v[0].pos.x = t.v[0].pos.x;
+//    n.v[0].pos.y = t.v[0].pos.y / 3.5;
+//    n.v[1].pos.x = t.v[1].pos.x;
+//    n.v[1].pos.y = t.v[1].pos.y / 3.5;
+//    n.v[2].pos.x = t.v[2].pos.x;
+//    n.v[2].pos.y = t.v[2].pos.y / 3.5;
+
+//    n.v[0].uv.x = t.v[0].uv.x;
+//    n.v[0].uv.y = t.v[0].uv.y * a;
+//    n.v[1].uv.x = t.v[1].uv.x;
+//    n.v[1].uv.y = t.v[1].uv.y * a;
+//    n.v[2].uv.x = t.v[2].uv.x;
+//    n.v[2].uv.y = t.v[2].uv.y * a;
+
+//    return n;
+//}
+tri2 transform_coord_to_GL(size_t tex_w, size_t tex_h, tri2& t)
+{
+    tri2 n;
+
+    n.v[0].pos.x = t.v[0].pos.x * 2 / width - 1.0f;
+    n.v[0].pos.y = t.v[0].pos.y * 2 / heigh - 1.0f;
+    n.v[1].pos.x = t.v[1].pos.x * 2 / width - 1.0f;
+    n.v[1].pos.y = t.v[1].pos.y * 2 / heigh - 1.0f;
+    n.v[2].pos.x = t.v[2].pos.x * 2 / width - 1.0f;
+    n.v[2].pos.y = t.v[2].pos.y * 2 / heigh - 1.0f;
+
+    n.v[0].uv.x = t.v[0].uv.x * 2 / width - 1.0f;
+    n.v[0].uv.y = t.v[0].uv.y * 2 / heigh - 1.0f;
+    n.v[1].uv.x = t.v[1].uv.x * 2 / width - 1.0f;
+    n.v[1].uv.y = t.v[1].uv.y * 2 / heigh - 1.0f;
+    n.v[2].uv.x = t.v[2].uv.x * 2 / width - 1.0f;
+    n.v[2].uv.y = t.v[2].uv.y * 2 / heigh - 1.0f;
+
     return n;
 }
 
@@ -98,6 +120,8 @@ int main()
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
+    const std::uint32_t tex_width  = texture->get_width();
+    const std::uint32_t tex_height = texture->get_height();
 
     bool continue_loop = true;
     while (continue_loop)
@@ -119,10 +143,10 @@ int main()
         std::ifstream file("vert_and_tex_coord.txt");
         assert(!!file);
 
-        triangle tr1, tr2;
+        //        triangle tr1, tr2;
 
-        file >> tr1;
-        file >> tr2;
+        //        file >> tr1;
+        //        file >> tr2;
         //        triangle q1 = scale_size(126, 18, tr1);
         //        triangle q2 = scale_size(126, 18, tr2);
         //        triangle q1({ 200, 200, 0, 0 }, { 200, 218, 0, 18 },
@@ -144,13 +168,28 @@ int main()
 
         // std::vector<triangle> t{ q1, q2, q3, q4, q5, q6 };
         ////
-        std::vector<triangle> t2;
-        draw_one_fig(t2);
-        engine->render_two_triangles(t2);
-        // triangle q2 = scale_size(126, 18, tr2);
+        //        std::vector<triangle> t2;
 
-        //        engine->render_text_triangle(q1);
-        //        engine->render_text_triangle(q2);
+        //        tri2 q2 = scale_size(126, 18, tr2);
+        //        t_end   = { tr1, tr2 };
+
+        std::vector<tri2> t;
+        draw_one_fig(t);
+
+        std::vector<tri2> t_end;
+        for (auto var : t)
+        {
+
+            tri2 t1 =
+                transform_coord_to_GL(tex_width / tex_height, tex_height, var);
+            t_end.push_back(t1);
+        }
+
+        vertex_buffer* vert_buff =
+            engine->create_vertex_buffer(&t_end[0], t_end.size());
+
+        engine->render_tetris(*vert_buff, texture);
+
         engine->swap_buffer();
     };
 
