@@ -192,10 +192,10 @@ class engine
 {
 public:
     ~engine();
-    virtual std::string initialize(std::string_view) = 0;
-    virtual void        uninitialize()               = 0;
-    virtual bool        read_event(keys& key)        = 0;
-    // virtual bool        check_input(keys&)           = 0;
+    virtual std::string initialize(std::string_view)                  = 0;
+    virtual void        uninitialize()                                = 0;
+    virtual bool        read_event(keys& key)                         = 0;
+    virtual bool check_input(const SDL_Event& e, const bind*& result) = 0;
 
     //    virtual index_buffer* create_index_buffer(const std::uint16_t*,
     //                                              std::size_t)    = 0;
