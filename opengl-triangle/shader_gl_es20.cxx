@@ -44,43 +44,38 @@ void shader_gl_es20::set_uniform(std::string_view uniform_name,
     glUniform1i(location, static_cast<int>(0 + texture_unit));
     GL_CHECK()
 }
+void shader_gl_es20::set_uniform(std::string_view uniform_name, const matrix& m)
+{
+    const int location = glGetUniformLocation(program_id, uniform_name.data());
+    GL_CHECK()
+    if (location == -1)
+    {
+        std::cerr << "can't get uniform location from shader\n";
+        throw std::runtime_error("can't get uniform location");
+    }
+    // OpenGL wants matrix in column major order
+    // clang-format off
+        float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
+                            m.row1.x, m.row1.y, m.row2.y,
+                            0.f,      0.f,       1.f };
+    // clang-format on
+    glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
+    GL_CHECK()
+}
 
-//    void shader_gl_es20::set_uniform(std::string_view uniform_name, const
-//    color& c)
+// void shader_gl_es20::set_uniform(std::string_view uniform_name, const color&
+// c)
+//{
+//    const int location = glGetUniformLocation(program_id,
+//    uniform_name.data()); GL_CHECK() if (location == -1)
 //    {
-//        const int location =
-//            glGetUniformLocation(program_id, uniform_name.data());
-//        GL_CHECK()
-//        if (location == -1)
-//        {
-//            std::cerr << "can't get uniform location from shader\n";
-//            throw std::runtime_error("can't get uniform location");
-//        }
-//        float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
-//        glUniform4fv(location, 1, &values[0]);
-//        GL_CHECK()
+//        std::cerr << "can't get uniform location from shader\n";
+//        throw std::runtime_error("can't get uniform location");
 //    }
-
-//    void shader_gl_es20::set_uniform(std::string_view uniform_name, const
-//    mat2x3& m)
-//    {
-//        const int location =
-//            glGetUniformLocation(program_id, uniform_name.data());
-//        GL_CHECK()
-//        if (location == -1)
-//        {
-//            std::cerr << "can't get uniform location from shader\n";
-//            throw std::runtime_error("can't get uniform location");
-//        }
-//        // OpenGL wants matrix in column major order
-//        // clang-format off
-//        float values[9] = { m.col0.x,  m.col0.y,  0.f,
-//                            m.col1.x,  m.col1.y,  0.f,
-//                            m.delta.x, m.delta.y, 1.f };
-//        // clang-format on
-//        glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
-//        GL_CHECK()
-//    }
+//    float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
+//    glUniform4fv(location, 1, &values[0]);
+//    GL_CHECK()
+//}
 
 GLuint shader_gl_es20::get_program_id() const
 {

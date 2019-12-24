@@ -19,13 +19,13 @@ int       figures[7][4] = {
     2, 3, 4, 5, // O
 };
 const int text_size = 18;
-const int quad_size = 36;
+const int quad_size = 40;
 vec2      a[4];
-/// create coordinates all tetris figures
+
+/// create array with coordinates all tetris figures
 vec2 figures_coord[7][4];
 void fill_tetris_fig(int fig_array[7][4])
 {
-
     for (int i = 0; i < 7; ++i)
     {
         for (int j = 0; j < 4; ++j)
@@ -39,19 +39,17 @@ void fill_tetris_fig(int fig_array[7][4])
 void draw_one_fig(std::vector<tri2>& vec_tr,
                   size_t             n) // set all triangles for 1 figure
 {
-
     assert(n >= 0); // задаём тип тетрамино
     assert(n < 7);
     vec2 b[4];
     for (int i = 0; i < 4; i++)
     {
-
         b[i].x = figures_coord[n][i].x * quad_size;
         b[i].y = figures_coord[n][i].y * quad_size;
     }
     for (int i = 0; i < 4; i++)
-
     {
+        // you can change colore of texture with shift uv coord
         v2 v01{ b[i].x, b[i].y, 0, 0 };
         v2 v02{ b[i].x, b[i].y + quad_size, 0, text_size };
         v2 v03{ b[i].x + quad_size, b[i].y + quad_size, text_size, text_size };
@@ -61,39 +59,11 @@ void draw_one_fig(std::vector<tri2>& vec_tr,
         vec_tr.push_back(t0);
         vec_tr.push_back(t1);
     }
-    //    for (int i = 0; i < 4; i++)
-    //    {
-    //         Устанавливаем позицию каждого кусочка тетрамино
-    //         sprite.setPosition(a[i].x * 18, a[i].y * 18);
-    //         Отрисовка спрайта
-    //         window.draw(sprite);
-    //    }
 }
-// tri2 scale_size(size_t w, size_t h, tri2 t)
-//{
-//    tri2  n;
-//    float a = static_cast<float>(w / h);
 
-//    n.v[0].pos.x = t.v[0].pos.x;
-//    n.v[0].pos.y = t.v[0].pos.y / 3.5;
-//    n.v[1].pos.x = t.v[1].pos.x;
-//    n.v[1].pos.y = t.v[1].pos.y / 3.5;
-//    n.v[2].pos.x = t.v[2].pos.x;
-//    n.v[2].pos.y = t.v[2].pos.y / 3.5;
-
-//    n.v[0].uv.x = t.v[0].uv.x;
-//    n.v[0].uv.y = t.v[0].uv.y * a;
-//    n.v[1].uv.x = t.v[1].uv.x;
-//    n.v[1].uv.y = t.v[1].uv.y * a;
-//    n.v[2].uv.x = t.v[2].uv.x;
-//    n.v[2].uv.y = t.v[2].uv.y * a;
-
-//    return n;
-//}
-tri2 transform_coord_to_GL(size_t tex_w, size_t tex_h, tri2& t)
+tri2 transform_pixel_coord_to_GL(size_t tex_w, size_t tex_h, tri2& t)
 {
     tri2 n;
-
     n.v[0].pos.x = t.v[0].pos.x * 2 / width - 1.0f;
     n.v[0].pos.y = t.v[0].pos.y * 2 / heigh - 1.0f;
     n.v[1].pos.x = t.v[1].pos.x * 2 / width - 1.0f;
@@ -107,7 +77,6 @@ tri2 transform_coord_to_GL(size_t tex_w, size_t tex_h, tri2& t)
     n.v[1].uv.y = t.v[1].uv.y * 2 / heigh - 1.0f;
     n.v[2].uv.x = t.v[2].uv.x * 2 / width - 1.0f;
     n.v[2].uv.y = t.v[2].uv.y * 2 / heigh - 1.0f;
-
     return n;
 }
 
@@ -138,18 +107,18 @@ int main()
     const std::uint32_t tex_height = texture->get_height();
 
     std::vector<tri2> t;
-    size_t            figure_type = 3;
+    size_t            figure_type = 0;
     draw_one_fig(t, figure_type);
 
     std::vector<tri2> t_end;
     for (auto var : t)
     {
-
-        tri2 t1 =
-            transform_coord_to_GL(tex_width / tex_height, tex_height, var);
+        // 7 - number of blocks in png
+        tri2 t1 = transform_pixel_coord_to_GL(tex_width / 7, tex_height, var);
         t_end.push_back(t1);
     }
-
+    vertex_buffer* vert_buff =
+        engine->create_vertex_buffer(&t_end[0], t_end.size());
     vec2        current_pos(0.f, 0.f);
     float       current_direction(0.f);
     const float pi = 3.1415926f;
@@ -170,17 +139,26 @@ int main()
                     break;
             }
 
-            if (engine->is_key_down(om::keys::right))
+            //            if (engine->is_key_down(keys::left))
+            //            {
+            //                std::cout << "keys::left" << std::endl;
+            //                //                current_pos.x -= 0.01f;
+            //                //                current_direction = pi / 2.f;
+            //            }
+            if (engine->is_key_down(keys::right))
             {
-                current_tank_pos.x += 0.01f;
-                current_tank_direction = -pi / 2.f;
+                std::cout << "keys::right" << std::endl;
+                current_pos.x += 10.f;
+                //                current_direction = -pi / 2.f;
             }
         }
-
-        vertex_buffer* vert_buff =
-            engine->create_vertex_buffer(&t_end[0], t_end.size());
+        matrix move   = matrix::move(current_pos);
+        matrix aspect = matrix::scale(1, 1 /*640.f / 480.f*/);
+        matrix rot    = matrix::rotation(current_direction);
+        matrix m      = rot * move * aspect;
 
         engine->render_tetris(*vert_buff, texture);
+        // engine->render_tet(*vert_buff, texture, m);
 
         engine->swap_buffer();
     };

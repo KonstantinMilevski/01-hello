@@ -13,9 +13,11 @@ public:
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes);
     void use() const;
     void set_uniform(std::string_view uniform_name, texture_gl_es20* texture);
+    void set_uniform(std::string_view uniform_name, const matrix& m);
+
     // void set_uniform(std::string_view uniform_name, const color& c); // mayby
     // no
-    // void   set_uniform(std::string_view uniform_name, const mat2x3& m);
+
     GLuint get_program_id() const;
 
 private:

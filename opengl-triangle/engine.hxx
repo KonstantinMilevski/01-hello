@@ -94,28 +94,25 @@ struct vec2
     }
     float x = 0;
     float y = 0;
+    vec2& operator+=(const vec2& l);
+    float length() const;
 };
-
+std::iostream& operator>>(std::iostream& is, vec2& v);
 struct vertex
 {
     vertex()
-        : x(0.0f)
-        , y(0.0f)
-        , tx(0.0f)
-        , ty(0.0f)
+        : pos()
+        , uv()
+
     {
     }
     vertex(float x_, float y_, float tx_, float ty_)
-        : x(x_)
-        , y(y_)
-        , tx(tx_)
-        , ty(ty_)
+        : pos(x_, y_)
+        , uv(tx_, ty_)
     {
     }
-    float x;
-    float y;
-    float tx;
-    float ty;
+    vec2 pos;
+    vec2 uv;
 };
 
 struct triangle
@@ -159,6 +156,25 @@ struct tri2
     tri2(v2 v01, v2 v02, v2 v03);
     v2 v[3];
 };
+vec2 operator+(const vec2& l, const vec2& r);
+vec2 operator-(const vec2& l, const vec2& r);
+
+struct matrix
+{
+    matrix();
+    static matrix identity();
+    static matrix scale(float scale);
+    static matrix scale(float sx, float sy);
+    static matrix rotation(float thetha);
+    static matrix move(const vec2& delta);
+    vec2          row0;
+    vec2          row1;
+    vec2          row2;
+};
+
+vec2   operator*(const vec2& v, const matrix& m);
+matrix operator*(const matrix& m1, const matrix& m2);
+
 std::istream& operator>>(std::istream& is, v2& v);
 std::istream& operator>>(std::istream& is, tri2& t);
 
@@ -192,10 +208,13 @@ class engine
 {
 public:
     ~engine();
-    virtual std::string initialize(std::string_view)                  = 0;
-    virtual void        uninitialize()                                = 0;
-    virtual bool        read_event(keys& key)                         = 0;
-    virtual bool check_input(const SDL_Event& e, const bind*& result) = 0;
+    virtual std::string initialize(std::string_view)     = 0;
+    virtual void        uninitialize()                   = 0;
+    virtual bool        read_event(keys& key)            = 0;
+    virtual bool        is_key_down(const enum keys key) = 0;
+    virtual void        render_tet(const vertex_buffer& buff, texture* tex,
+                                   const matrix& m)      = 0;
+    // virtual bool check_input(const SDL_Event& e, const bind*& result) = 0;
 
     //    virtual index_buffer* create_index_buffer(const std::uint16_t*,
     //                                              std::size_t)    = 0;
