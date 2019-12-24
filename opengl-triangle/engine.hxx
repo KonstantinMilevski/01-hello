@@ -52,28 +52,7 @@ constexpr int width = 640; // 640;
 constexpr int heigh = 480; // 480;
 
 /// for SDLevent
-enum class event
-{
-    /// input events
-    left_pressed,
-    left_released,
-    right_pressed,
-    right_released,
-    up_pressed,
-    up_released,
-    down_pressed,
-    down_released,
-    select_pressed,
-    select_released,
-    start_pressed,
-    start_released,
-    button1_pressed,
-    button1_released,
-    button2_pressed,
-    button2_released,
-    /// virtual console events
-    turn_off
-};
+
 enum class keys
 {
     left,
@@ -84,6 +63,12 @@ enum class keys
     exit
 };
 
+struct event
+{
+    enum keys key;
+    bool      is_down;
+    // double     timestamp;
+};
 struct vec2
 {
     vec2() {}
@@ -210,7 +195,7 @@ public:
     ~engine();
     virtual std::string initialize(std::string_view)     = 0;
     virtual void        uninitialize()                   = 0;
-    virtual bool        read_event(keys& key)            = 0;
+    virtual bool        read_event(event& e)             = 0;
     virtual bool        is_key_down(const enum keys key) = 0;
     virtual void        render_tet(const vertex_buffer& buff, texture* tex,
                                    const matrix& m)      = 0;

@@ -19,7 +19,7 @@ int       figures[7][4] = {
     2, 3, 4, 5, // O
 };
 const int text_size = 18;
-const int quad_size = 40;
+const int quad_size = 20;
 vec2      a[4];
 
 /// create array with coordinates all tetris figures
@@ -119,49 +119,72 @@ int main()
     }
     vertex_buffer* vert_buff =
         engine->create_vertex_buffer(&t_end[0], t_end.size());
-    vec2        current_pos(0.f, 0.f);
+    vec2        current_pos(0.8f, 1.3f);
     float       current_direction(0.f);
     const float pi = 3.1415926f;
 
     bool continue_loop = true;
     while (continue_loop)
     {
-        keys game_key;
-
-        while (engine->read_event(game_key))
+        event game_event;
+        bool  check = true;
+        while (engine->read_event(game_event) && check)
         {
-            switch (game_key)
+            switch (game_event.key)
             {
                 case keys::exit:
                     continue_loop = false;
                     break;
+                case keys::right:
+                    if (engine->is_key_down(keys::right))
+                    {
+                        std::cout << "keys::right" << std::endl;
+                        current_pos.x += 0.05f;
+                        check = false;
+                        break;
+                        //                current_direction = -pi / 2.f;
+                        // game_event.is_down == false;
+                    }
+                case keys::left:
+                    if (engine->is_key_down(keys::left))
+                    {
+                        std::cout << "keys::left" << std::endl;
+                        current_pos.x -= 0.05f;
+                        check = false;
+                        break;
+                        //                current_direction = pi / 2.f;
+                    }
                 default:
                     break;
             }
-
             //            if (engine->is_key_down(keys::left))
             //            {
             //                std::cout << "keys::left" << std::endl;
-            //                //                current_pos.x -= 0.01f;
+            //                current_pos.x -= 0.05f;
+            //                check = false;
+            //                break;
             //                //                current_direction = pi / 2.f;
             //            }
-            if (engine->is_key_down(keys::right))
-            {
-                std::cout << "keys::right" << std::endl;
-                current_pos.x += 10.f;
-                //                current_direction = -pi / 2.f;
-            }
+            //            if (engine->is_key_down(keys::right))
+            //            {
+            //                std::cout << "keys::right" << std::endl;
+            //                current_pos.x += 0.05f;
+            //                check = false;
+            //                break;
+            //                //                current_direction = -pi / 2.f;
+            //                // game_event.is_down == false;
+            //            }
         }
         matrix move   = matrix::move(current_pos);
         matrix aspect = matrix::scale(1, 1 /*640.f / 480.f*/);
         matrix rot    = matrix::rotation(current_direction);
         matrix m      = rot * move * aspect;
 
-        engine->render_tetris(*vert_buff, texture);
-        // engine->render_tet(*vert_buff, texture, m);
+        // engine->render_tetris(*vert_buff, texture);
+        engine->render_tet(*vert_buff, texture, m);
 
         engine->swap_buffer();
-    };
+    }
 
     engine->uninitialize();
     return 0;

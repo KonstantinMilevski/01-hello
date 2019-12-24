@@ -54,14 +54,15 @@ unsigned long text_height = 0;
 //}
 struct bind
 {
+    bind() {}
     bind(SDL_Keycode _key, std::string_view _name, keys _k)
-        : key(_key)
+        : key_sdl(_key)
         , name(_name)
         , selected_key(_k)
 
     {
     }
-    SDL_Keycode      key;
+    SDL_Keycode      key_sdl;
     std::string_view name;
     keys             selected_key;
 };
@@ -82,7 +83,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 
     const auto it =
         find_if(begin(keys_list), end(keys_list),
-                [&](const ::bind& b) { return b.key == e.key.keysym.sym; });
+                [&](const ::bind& b) { return b.key_sdl == e.key.keysym.sym; });
 
     if (it != end(keys_list))
     {
@@ -396,36 +397,30 @@ public:
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
-    bool read_event(keys& key) override final
+    bool read_event(event& e) override final
     {
         using namespace std;
         SDL_Event sdl_event;
-        if (SDL_PollEvent(&sdl_event))
+        if (SDL_WaitEvent(&sdl_event))
         {
             const ::bind* binding = nullptr;
 
             if (sdl_event.type == SDL_QUIT)
             {
-                key = keys::exit;
+                e.key = keys::exit;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_KEYDOWN ||
+                     sdl_event.type == SDL_KEYUP)
             {
                 if (check_input(sdl_event, binding))
                 {
-                    key = binding->selected_key;
-                    std::cout << "Binding succses" << std::endl;
+                    e.key     = binding->selected_key;
+                    e.is_down = sdl_event.type == SDL_KEYDOWN;
+                    // e.timestamp   = sdl_event.common.timestamp * 0.001;
                     return true;
                 }
             }
-            //            else if (sdl_event.type == SDL_KEYUP)
-            //            {
-            //                if (check_input(sdl_event, binding))
-            //                {
-            //                    key = binding->selected_key;
-            //                    return true;
-            //                }
-            //            }
 
             return false;
         }
@@ -753,18 +748,32 @@ public:
 
     bool is_key_down(const enum keys key) final
     {
-        const auto it =
-            std::find_if(begin(keys_list), end(keys_list),
-                         [&](const bind& b) { return b.selected_key == key; });
-
-        if (it != end(keys_list))
+        //        const auto it =
+        //            std::find_if(begin(keys_list), end(keys_list),
+        //                         [&](const bind& b) { return b.selected_key ==
+        //                         key; });
+        bind b;
+        for (auto i = begin(keys_list); i != end(keys_list); i++)
         {
-            const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
-            int                 sdl_scan_code = SDL_GetScancodeFromKey(it->key);
-            std::cout << SDL_GetScancodeName(SDL_GetScancodeFromKey(it->key))
-                      << std::endl;
-            return state[sdl_scan_code];
+
+            if (i->selected_key == key)
+                b = *i;
         }
+        const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
+        int                 sdl_scan_code = SDL_GetScancodeFromKey(b.key_sdl);
+        std::cout << SDL_GetScancodeName(SDL_GetScancodeFromKey(b.key_sdl))
+                  << std::endl;
+        return state[sdl_scan_code];
+        //        if (it != end(keys_list))
+        //        {
+        //            const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
+        //            int sdl_scan_code         =
+        //            SDL_GetScancodeFromKey(it->key_sdl); std::cout <<
+        //            SDL_GetScancodeName(
+        //                             SDL_GetScancodeFromKey(it->key_sdl))
+        //                      << std::endl;
+        //            return state[sdl_scan_code];
+        //        }
         return false;
     }
 

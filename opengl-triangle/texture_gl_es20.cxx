@@ -124,6 +124,9 @@ texture_gl_es20::~texture_gl_es20()
 }
 void texture_gl_es20::bind() const
 {
+    GLboolean is_texture = glIsTexture(tex_handl);
+    SDL_assert(is_texture);
+    GL_CHECK()
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     GL_CHECK()
 }
