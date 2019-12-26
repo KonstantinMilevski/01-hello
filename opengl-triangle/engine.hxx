@@ -80,6 +80,8 @@ struct vec2
     float x = 0;
     float y = 0;
     vec2& operator+=(const vec2& l);
+    vec2& operator*=(const float& f);
+    vec2& operator/=(const float& f);
     float length() const;
 };
 std::iostream& operator>>(std::iostream& is, vec2& v);
@@ -88,6 +90,12 @@ struct vertex
     vertex()
         : pos()
         , uv()
+
+    {
+    }
+    vertex(vec2 p_, vec2 uv_)
+        : pos(p_)
+        , uv(uv_)
 
     {
     }
@@ -108,38 +116,20 @@ struct triangle
         v[1] = vertex();
         v[2] = vertex();
     }
-    triangle(vertex v0, vertex v1, vertex v2)
+    triangle(vertex v00, vertex v01, vertex v02)
     {
-        v[0] = v0;
-        v[1] = v1;
-        v[2] = v2;
+        v[0] = v00;
+        v[1] = v01;
+        v[2] = v02;
     }
     vertex v[3];
-};
-struct v2
-{
-    v2()
-        : pos(0.0f, 0.0f)
-        , uv(0.0f, 0.0f)
-    {
-    }
-    v2(float x_pos, float y_pos, float x_uv, float y_uv)
-
-    {
-        pos.x = x_pos;
-        pos.y = y_pos;
-        uv.x  = x_uv;
-        uv.y  = y_uv;
-    }
-    vec2 pos;
-    vec2 uv;
 };
 
 struct tri2
 {
     tri2();
-    tri2(v2 v01, v2 v02, v2 v03);
-    v2 v[3];
+    tri2(vertex v01, vertex v02, vertex v03);
+    vertex v[3];
 };
 vec2 operator+(const vec2& l, const vec2& r);
 vec2 operator-(const vec2& l, const vec2& r);
@@ -160,7 +150,7 @@ struct matrix
 vec2   operator*(const vec2& v, const matrix& m);
 matrix operator*(const matrix& m1, const matrix& m2);
 
-std::istream& operator>>(std::istream& is, v2& v);
+std::istream& operator>>(std::istream& is, vertex& v);
 std::istream& operator>>(std::istream& is, tri2& t);
 
 std::istream& operator>>(std::istream& is, vertex& v);
@@ -179,7 +169,7 @@ class vertex_buffer
 {
 public:
     virtual ~vertex_buffer();
-    virtual const v2* data() const = 0;
+    virtual const vertex* data() const = 0;
     /// count of vertexes
     virtual size_t size() const = 0;
 };
@@ -207,7 +197,8 @@ public:
 
     virtual vertex_buffer* create_vertex_buffer(const tri2* tri,
                                                 std::size_t n) = 0;
-    // virtual vertex_buffer* create_vertex_buffer(const v2*, std::size_t) = 0;
+    // virtual vertex_buffer* create_vertex_buffer(const vertex*, std::size_t) =
+    // 0;
     virtual void destroy_vertex_buffer(vertex_buffer*) = 0;
 
     virtual texture* create_texture(std::string_view path)                  = 0;

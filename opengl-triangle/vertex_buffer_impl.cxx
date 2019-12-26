@@ -10,7 +10,7 @@ vertex_buffer_impl::vertex_buffer_impl(const tri2* tri, std::size_t n)
     }
 }
 
-const v2* vertex_buffer_impl::data() const
+const vertex* vertex_buffer_impl::data() const
 {
     return &triangles.data()->v[0];
 }

@@ -124,21 +124,14 @@ std::istream& operator>>(std::istream& is, triangle& t)
 }
 
 tri2::tri2()
-    : v{ v2(), v2(), v2() }
+    : v{ vertex(), vertex(), vertex() }
 {
 }
-tri2::tri2(v2 v01, v2 v02, v2 v03)
-    : v{ v2(v01), v2(v02), v2(v03) }
+tri2::tri2(vertex v01, vertex v02, vertex v03)
+    : v{ vertex(v01), vertex(v02), vertex(v03) }
 {
 }
-std::istream& operator>>(std::istream& is, v2& v)
-{
-    is >> v.pos.x;
-    is >> v.pos.y;
-    is >> v.uv.x;
-    is >> v.uv.y;
-    return is;
-}
+
 std::istream& operator>>(std::istream& is, tri2& t)
 {
     is >> t.v[0];
@@ -150,6 +143,20 @@ vec2& vec2::operator+=(const vec2& l)
 {
     x += l.x;
     y += l.y;
+    return *this;
+}
+
+vec2& vec2::operator*=(const float& f)
+{
+    x *= f;
+    y *= f;
+    return *this;
+}
+
+vec2& vec2::operator/=(const float& f)
+{
+    x /= f;
+    y /= f;
     return *this;
 }
 float vec2::length() const
@@ -598,9 +605,9 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
         GL_CHECK()
 
-        const v2* t = buff.data();
-        uint32_t  data_size_in_bytes =
-            static_cast<uint32_t>(buff.size() * sizeof(v2));
+        const vertex* t = buff.data();
+        uint32_t      data_size_in_bytes =
+            static_cast<uint32_t>(buff.size() * sizeof(vertex));
         /// copy the data into the buffer object, when the buffer has been
         /// initialized
         glBufferData(
@@ -616,7 +623,8 @@ public:
         GL_CHECK()
 
         // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), nullptr);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              nullptr);
 
         GL_CHECK()
         glEnableVertexAttribArray(0);
@@ -630,8 +638,8 @@ public:
         //        GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
-                              reinterpret_cast<void*>(sizeof(v2::pos)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              reinterpret_cast<void*>(sizeof(vertex::pos)));
 
         GL_CHECK()
         glEnableVertexAttribArray(2);
@@ -664,9 +672,9 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
         GL_CHECK()
 
-        const v2* t = buff.data();
-        uint32_t  data_size_in_bytes =
-            static_cast<uint32_t>(buff.size() * sizeof(v2));
+        const vertex* t = buff.data();
+        uint32_t      data_size_in_bytes =
+            static_cast<uint32_t>(buff.size() * sizeof(vertex));
         /// copy the data into the buffer object, when the buffer has been
         /// initialized
         glBufferData(
@@ -682,7 +690,8 @@ public:
         GL_CHECK()
 
         // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), nullptr);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              nullptr);
 
         GL_CHECK()
         glEnableVertexAttribArray(0);
@@ -696,8 +705,8 @@ public:
         //        GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
-                              reinterpret_cast<void*>(sizeof(v2::pos)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                              reinterpret_cast<void*>(sizeof(vertex::pos)));
 
         GL_CHECK()
         glEnableVertexAttribArray(2);
@@ -739,7 +748,8 @@ public:
         assert(triangles != nullptr);
         return new vertex_buffer_impl(triangles, n);
     }
-    //    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    //    vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t
+    //    count)
     //    {
     //        assert(vert != nullptr);
     //        return new vertex_buffer_impl(vert, count);
@@ -748,32 +758,15 @@ public:
 
     bool is_key_down(const enum keys key) final
     {
-        //        const auto it =
-        //            std::find_if(begin(keys_list), end(keys_list),
-        //                         [&](const bind& b) { return b.selected_key ==
-        //                         key; });
-        bind b;
-        for (auto i = begin(keys_list); i != end(keys_list); i++)
+        const auto it =
+            std::find_if(begin(keys_list), end(keys_list),
+                         [&](const bind& b) { return b.selected_key == key; });
+        if (it != end(keys_list))
         {
-
-            if (i->selected_key == key)
-                b = *i;
+            const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
+            int sdl_scan_code         = SDL_GetScancodeFromKey(it->key_sdl);
+            return state[sdl_scan_code];
         }
-        const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
-        int                 sdl_scan_code = SDL_GetScancodeFromKey(b.key_sdl);
-        std::cout << SDL_GetScancodeName(SDL_GetScancodeFromKey(b.key_sdl))
-                  << std::endl;
-        return state[sdl_scan_code];
-        //        if (it != end(keys_list))
-        //        {
-        //            const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
-        //            int sdl_scan_code         =
-        //            SDL_GetScancodeFromKey(it->key_sdl); std::cout <<
-        //            SDL_GetScancodeName(
-        //                             SDL_GetScancodeFromKey(it->key_sdl))
-        //                      << std::endl;
-        //            return state[sdl_scan_code];
-        //        }
         return false;
     }
 
