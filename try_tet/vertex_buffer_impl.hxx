@@ -17,5 +17,5 @@ public:
     ~vertex_buffer_impl() final {}
 
 private:
-    std::vector<vertex> vertexes;
+    std::vector<tri2> triangles;
 };

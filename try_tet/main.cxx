@@ -272,7 +272,7 @@ int main()
     // block
     vertex            f_pos{ -0.0, -0.0, 0.0, 0.0 };
     rect              r{ { 0, 0 }, { 1.f / 7.f, 1 } };
-    block             f(f_pos, 1.0, r, texture);
+    block             f(f_pos, 0.1, r, texture);
     std::vector<tri2> t_res = f.build_block();
     vertex_buffer*    one_quad_buff =
         engine->create_vertex_buffer(&t_res[0], t_res.size());

@@ -1,18 +1,20 @@
 #include "vertex_buffer_impl.hxx"
 
 vertex_buffer_impl::vertex_buffer_impl(const tri2* tri, std::size_t n)
-    : vertexes(n)
+    : triangles(n)
 {
     assert(tri != nullptr);
-    std::copy_n(tri, n, begin(vertexes));
+    for (size_t i = 0; i < n; ++i)
+    {
+        triangles.push_back(tri[i]);
+    }
 }
 
 const vertex* vertex_buffer_impl::data() const
 {
-    return vertexes.data();
-    ;
+    return &triangles.data()->v[0];
 }
 size_t vertex_buffer_impl::size() const
 {
-    return vertexes.size();
+    return triangles.size() * 3;
 }
