@@ -146,6 +146,13 @@ vec2& vec2::operator+=(const vec2& l)
     return *this;
 }
 
+vec2& vec2::operator*=(const vec2& l)
+{
+    x *= l.x;
+    y *= l.y;
+    return *this;
+}
+
 vec2& vec2::operator*=(const float& f)
 {
     x *= f;
@@ -276,9 +283,9 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("open-GL test", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, width, heigh,
-                                  ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("tetris", SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED, screen_width,
+                                  screen_height, ::SDL_WINDOW_OPENGL);
         if (window == nullptr)
         {
             serr << "error: failed call SDL_CreateWindow: " << SDL_GetError()
@@ -725,7 +732,7 @@ public:
     {
         SDL_GL_SwapWindow(window);
 
-        glClearColor(0.3f, 0.3f, 1.0f, 0.0f);
+        glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
         GL_CHECK()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK()

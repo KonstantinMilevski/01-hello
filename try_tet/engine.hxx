@@ -48,8 +48,8 @@ static void load_gl_func(const char* func_name, T& result)
     }
     result = reinterpret_cast<T>(gl_pointer);
 }
-constexpr int width = 640; // 640;
-constexpr int heigh = 480; // 480;
+constexpr size_t screen_width  = 960.f; // 640;
+constexpr size_t screen_height = 540.f; // 480;
 
 /// for SDLevent
 
@@ -80,6 +80,7 @@ struct vec2
     float x = 0;
     float y = 0;
     vec2& operator+=(const vec2& l);
+    vec2& operator*=(const vec2& l);
     vec2& operator*=(const float& f);
     vec2& operator/=(const float& f);
     float length() const;

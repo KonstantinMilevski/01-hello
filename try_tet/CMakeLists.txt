@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(opengl-triangle CXX C)
+project(tetris CXX C)
 
 add_library(engine SHARED engine.cxx
                                engine.hxx
