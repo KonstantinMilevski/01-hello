@@ -379,8 +379,8 @@ int main()
 
         // engine->render_tetris(*one_quad_buff, f.tex_);
 
-        engine->render_tetris(*vert_buff, fig_I.cell.tex_);
-        // engine->render_tet(*vert_buff, texture, m);
+        // engine->render_tetris(*vert_buff, fig_I.cell.tex_);
+        engine->render_tet(*vert_buff, texture, m);
 
         engine->swap_buffer();
     }
