@@ -202,16 +202,14 @@ public:
     // 0;
     virtual void destroy_vertex_buffer(vertex_buffer*) = 0;
 
-    virtual texture* create_texture(std::string_view path)                  = 0;
-    virtual texture* create_texture_part(std::string_view path,
-                                         const size_t     width,
-                                         const size_t     height)               = 0;
-    virtual void     destroy_texture(texture* t)                            = 0;
-    virtual void     render_triangle(triangle&)                             = 0;
-    virtual void     render_text_triangle(triangle& t)                      = 0;
-    virtual void     render_two_triangles(const std::vector<triangle>& v)   = 0;
-    virtual void     render_tetris(const vertex_buffer& buff, texture* tex) = 0;
-    virtual void     swap_buffer()                                          = 0;
-    virtual bool     load_texture(std::string_view path, unsigned long w,
-                                  unsigned long h)                          = 0;
+    virtual texture* create_texture(std::string_view path) = 0;
+
+    virtual void destroy_texture(texture* t)                            = 0;
+    virtual void render_triangle(triangle&)                             = 0;
+    virtual void render_text_triangle(triangle& t)                      = 0;
+    virtual void render_two_triangles(const std::vector<triangle>& v)   = 0;
+    virtual void render_tetris(const vertex_buffer& buff, texture* tex) = 0;
+    virtual void swap_buffer()                                          = 0;
+    virtual bool load_texture(std::string_view path, unsigned long w,
+                              unsigned long h)                          = 0;
 };

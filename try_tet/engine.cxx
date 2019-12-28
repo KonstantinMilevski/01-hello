@@ -742,11 +742,7 @@ public:
     {
         return new texture_gl_es20(path);
     }
-    texture* create_texture_part(std::string_view path, const size_t width,
-                                 const size_t height)
-    {
-        return new texture_gl_es20(path, width, height);
-    }
+
     void destroy_texture(texture* t) final { delete t; }
 
     /// create_vertex_buffer

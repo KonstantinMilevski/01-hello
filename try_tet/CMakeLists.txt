@@ -12,10 +12,11 @@ add_library(engine SHARED engine.cxx
                                vertex_buffer_impl.hxx
                                shader_gl_es20.cxx
                                shader_gl_es20.hxx
-                               picopng.hxx)
+                               stb_image.h
+                               )
 
 target_compile_features(engine PUBLIC cxx_std_17)
-
+set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
 
 
 find_package(sdl2 REQUIRED)

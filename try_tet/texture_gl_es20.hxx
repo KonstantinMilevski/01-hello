@@ -13,8 +13,6 @@ class texture_gl_es20 final : public texture
 {
 public:
     explicit texture_gl_es20(std::string_view path);
-    texture_gl_es20(std::string_view path, const size_t tex_width,
-                    const size_t tex_height);
     ~texture_gl_es20() override;
 
     void bind() const override;
@@ -23,9 +21,6 @@ public:
     std::uint32_t get_height() const final { return tex_height; }
 
 private:
-    void gen_texture_from_pixels(const void* pixels, const size_t tex_width,
-                                 const size_t tex_height);
-
     std::string   file_path;
     GLuint        tex_handl  = 0;
     std::uint32_t tex_width  = 0;
