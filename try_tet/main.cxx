@@ -22,7 +22,7 @@
 //    type_O
 //};
 
-int                              n             = 20;
+int                              n             = 0;
 static const std::vector<vertex> figures_coord = {
     { 0.0, 1.5, 0.0, 0.0 },
     { 0.0, 0.5, 0.0, 0.0 },
@@ -112,7 +112,7 @@ struct block
         , tex_(tex)
     {
     }
-    std::vector<tri2> build_block()
+    std::vector<vertex> build_block()
     {
         float                 size_ = 1.f;
         std::array<vertex, 4> quad;
@@ -157,13 +157,65 @@ struct block
             qu.pos /= 5;
         }
 
-        tri2              t0(quad[3], quad[1], quad[2]);
-        tri2              t1(quad[0], quad[3], quad[1]);
-        std::vector<tri2> quad_tri;
-        quad_tri.push_back(t0);
-        quad_tri.push_back(t1);
+        std::vector<vertex> quad_tri = { quad[3], quad[1], quad[2],
+                                         quad[0], quad[3], quad[1] };
         return quad_tri;
     }
+    //    std::vector<tri2> build_block()
+    //    {
+    //        float                 size_ = 1.f;
+    //        std::array<vertex, 4> quad;
+    //        // you can change colore of texture with shift uv coord
+    //        ///   0            1
+    //        ///   *------------*
+    //        ///   |           /|
+    //        ///   |         /  |
+    //        ///   |      P/    |  // P - pos_ center - OpenGL (0,0)
+    //        ///   |     /      |  // vertex 3 - texture (0,0)
+    //        ///   |   /        |
+    //        ///   | /          |
+    //        ///   *------------*
+    //        ///   3            2
+    //        ///
+    //        /// 0 left-up, clockwise
+    //        /// vec2.pos
+    //        quad[0].pos.x = centr_pos_.pos.x - size_ / 2;
+    //        quad[0].pos.y = centr_pos_.pos.y + size_ / 2;
+    //        quad[1].pos.x = centr_pos_.pos.x + size_ / 2;
+    //        quad[1].pos.y = centr_pos_.pos.y + size_ / 2;
+    //        quad[2].pos.x = centr_pos_.pos.x + size_ / 2;
+    //        quad[2].pos.y = centr_pos_.pos.y - size_ / 2;
+    //        quad[3].pos.x = centr_pos_.pos.x - size_ / 2;
+    //        quad[3].pos.y = centr_pos_.pos.y - size_ / 2;
+    //        /// vec2.uv, OpenGL texture lower left angle is (0, 0) coordinate
+    //        quad[3].uv.x = rect_pos_.pos.x + centr_pos_.uv.x;
+    //        quad[3].uv.y = rect_pos_.pos.y + centr_pos_.uv.y;
+    //        quad[0].uv.x = rect_pos_.pos.x + centr_pos_.uv.x;
+    //        quad[0].uv.y = rect_pos_.pos.y + centr_pos_.uv.y +
+    //        rect_pos_.size.y; quad[1].uv.x = rect_pos_.pos.x + centr_pos_.uv.x
+    //        + rect_pos_.size.x; quad[1].uv.y = rect_pos_.pos.y +
+    //        centr_pos_.uv.y + rect_pos_.size.y; quad[2].uv.x = rect_pos_.pos.x
+    //        + centr_pos_.uv.x + rect_pos_.size.x; quad[2].uv.y =
+    //        rect_pos_.pos.y + centr_pos_.uv.y;
+
+    //        for (auto& qu : quad)
+    //        {
+    //            /// scale to GL_window
+    //            qu.pos /= 2.f;
+    //            /// scale to monitor_window
+    //             qu.pos *= { static_cast<float>(screen_height) /
+    //            screen_width, 1.f
+    //            // };
+    //             qu.pos /= 5;
+    //        }
+
+    //        tri2              t0(quad[3], quad[1], quad[2]);
+    //        tri2              t1(quad[0], quad[3], quad[1]);
+    //        std::vector<tri2> quad_tri;
+    //        quad_tri.push_back(t0);
+    //        quad_tri.push_back(t1);
+    //        return quad_tri;
+    //    }
 
     vertex centr_pos_; /// centr of cell
     // float    size_;          /// size of cell
@@ -180,17 +232,30 @@ struct figure
         , fig_center(pos)
     {
     }
+    //    std::vector<tri2> build_all_tr()
+    //    {
+    //        std::vector<tri2>  vec_tr;
+    //        std::vector<block> fig_block;
 
-    std::vector<tri2> build_all_tr()
+    //        for (int i = 0; i < 4; i++)
+    //        {
+    //            block             b(pos[i], cell.rect_pos_, cell.tex_);
+    //            std::vector<tri2> res = b.build_block();
+    //            std::copy_n(begin(res), 2, std::back_inserter(vec_tr));
+    //        }
+
+    //        return vec_tr;
+    //    }
+    std::vector<vertex> build_all_tr()
     {
-        std::vector<tri2>  vec_tr;
-        std::vector<block> fig_block;
+        std::vector<vertex> vec_tr;
+        std::vector<block>  fig_block;
 
         for (int i = 0; i < 4; i++)
         {
-            block             b(pos[i], cell.rect_pos_, cell.tex_);
-            std::vector<tri2> res = b.build_block();
-            std::copy_n(begin(res), 2, std::back_inserter(vec_tr));
+            block               b(pos[i], cell.rect_pos_, cell.tex_);
+            std::vector<vertex> res = b.build_block();
+            std::copy_n(begin(res), 6, std::back_inserter(vec_tr));
         }
 
         return vec_tr;
@@ -220,15 +285,14 @@ int main()
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-    const std::uint32_t tex_width  = texture->get_width();
-    const std::uint32_t tex_height = texture->get_height();
 
     // block
-    vertex            f_pos{ -0.0, -0.0, 0.0, 0.0 };
-    rect              r{ { 0, 0 }, { 1.f / 7.f, 1 } };
-    block             f(f_pos, r, texture);
-    std::vector<tri2> t_res = f.build_block();
-    vertex_buffer*    one_quad_buff =
+    vertex              f_pos{ -0.0, -0.0, 0.0, 0.0 };
+    rect                r{ { 0, 0 }, { 1.f / 7.f, 1 } };
+    block               f(f_pos, r, texture);
+    std::vector<vertex> t_res = f.build_block();
+    // std::vector<tri2> t_res = f.build_block();
+    vertex_buffer* one_quad_buff =
         engine->create_vertex_buffer(&t_res[0], t_res.size());
 
     // end_block
@@ -241,9 +305,9 @@ int main()
 
     figure fig_I(f, res1, central_pos);
 
-    std::vector<tri2> res{ fig_I.build_all_tr() };
-
-    vertex_buffer* vert_buff =
+    //    std::vector<tri2> res{ fig_I.build_all_tr() };
+    std::vector<vertex> res{ fig_I.build_all_tr() };
+    vertex_buffer*      vert_buff =
         engine->create_vertex_buffer(&res[0], res.size());
 
     // end_figure
@@ -315,8 +379,8 @@ int main()
 
         // engine->render_tetris(*one_quad_buff, f.tex_);
 
-        // engine->render_tetris(*vert_buff, fig_I.cell.tex_);
-        engine->render_tet(*vert_buff, texture, m);
+        engine->render_tetris(*vert_buff, fig_I.cell.tex_);
+        // engine->render_tet(*vert_buff, texture, m);
 
         engine->swap_buffer();
     }
