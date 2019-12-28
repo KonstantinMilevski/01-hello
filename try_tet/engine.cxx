@@ -550,7 +550,7 @@ public:
 
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              nullptr);
+                              &t->pos);
 
         GL_CHECK()
         glEnableVertexAttribArray(0);
@@ -564,8 +564,7 @@ public:
         //        GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              reinterpret_cast<void*>(sizeof(vertex::pos)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t->uv);
 
         GL_CHECK()
         glEnableVertexAttribArray(2);

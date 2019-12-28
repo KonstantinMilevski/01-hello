@@ -22,7 +22,7 @@
 //    type_O
 //};
 
-int                              n             = 0;
+int                              n             = 4;
 static const std::vector<vertex> figures_coord = {
     { 0.0, 1.5, 0.0, 0.0 },
     { 0.0, 0.5, 0.0, 0.0 },
