@@ -166,6 +166,24 @@ vec2& vec2::operator/=(const float& f)
     y /= f;
     return *this;
 }
+
+vec2& vec2::operator+=(const float& f)
+{
+    x += f;
+    y += f;
+    return *this;
+}
+vec2& vec2::operator-=(const float& f)
+{
+    x -= f;
+    y -= f;
+    return *this;
+}
+
+bool vec2::operator==(const vec2& r)
+{
+    return std::abs(x - r.x) < 0.0001f && std::abs(y - r.y) < 0.0001f;
+}
 float vec2::length() const
 {
     return std::sqrt(x * x + y * y);
@@ -649,7 +667,7 @@ public:
     void swap_buffer() override final
     {
         SDL_GL_SwapWindow(window);
-
+        GL_CHECK()
         glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
         GL_CHECK()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -689,6 +707,12 @@ public:
             return state[sdl_scan_code];
         }
         return false;
+    }
+    float get_time_from_init() final
+    {
+        std::uint32_t ms_from_library_initialization = SDL_GetTicks();
+        float         seconds = ms_from_library_initialization * 0.001f;
+        return seconds;
     }
 
 private:

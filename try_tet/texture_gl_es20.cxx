@@ -1,5 +1,4 @@
 #include "texture_gl_es20.hxx"
-#include "picopng.hxx"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
