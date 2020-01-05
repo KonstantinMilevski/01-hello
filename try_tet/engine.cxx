@@ -429,35 +429,7 @@ public:
         SDL_DestroyWindow(window);
         SDL_Quit();
     }
-    bool read_event(event& e) override final
-    {
-        using namespace std;
-        SDL_Event sdl_event;
-        if (SDL_WaitEvent(&sdl_event))
-        {
-            const ::bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
-            {
-                e.key = keys::exit;
-                return true;
-            }
-            else if (sdl_event.type == SDL_KEYDOWN ||
-                     sdl_event.type == SDL_KEYUP)
-            {
-                if (check_input(sdl_event, binding))
-                {
-                    e.key     = binding->selected_key;
-                    e.is_down = sdl_event.type == SDL_KEYDOWN;
-                    // e.timestamp   = sdl_event.common.timestamp * 0.001;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        return true;
-    }
     bool load_texture(std::string_view path, unsigned long w,
                       unsigned long h) final
     {
@@ -673,28 +645,33 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         GL_CHECK()
     }
-
-    texture* create_texture(std::string_view path) final
+    bool read_event(event& e) override final
     {
-        return new texture_gl_es20(path);
+        using namespace std;
+        SDL_Event sdl_event;
+        if (SDL_PollEvent(&sdl_event))
+        {
+            const ::bind* binding = nullptr;
+
+            if (sdl_event.type == SDL_QUIT)
+            {
+                e.key = keys::exit;
+                return true;
+            }
+            else if (sdl_event.type == SDL_KEYDOWN ||
+                     sdl_event.type == SDL_KEYUP)
+            {
+                if (check_input(sdl_event, binding))
+                {
+                    e.key     = binding->selected_key;
+                    e.is_down = sdl_event.type == SDL_KEYDOWN;
+                    // e.timestamp = sdl_event.common.timestamp * 0.001;
+                    return true;
+                }
+                return false;
+            }
+        }
     }
-
-    void destroy_texture(texture* t) final { delete t; }
-
-    /// create_vertex_buffer
-    //    vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t
-    //    n)
-    //    {
-    //        assert(triangles != nullptr);
-    //        return new vertex_buffer_impl(triangles, n);
-    //    }
-    vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t count)
-    {
-        assert(vert != nullptr);
-        return new vertex_buffer_impl(vert, count);
-    }
-    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
-
     bool is_key_down(const enum keys key) final
     {
         const auto it =
@@ -708,6 +685,27 @@ public:
         }
         return false;
     }
+    texture* create_texture(std::string_view path) final
+    {
+        return new texture_gl_es20(path);
+    }
+
+    void destroy_texture(texture* t) final { delete t; }
+
+    /// create_vertex_buffer
+    //    vertex_buffer* create_vertex_buffer(const tri2* triangles,
+    //    std::size_t n)
+    //    {
+    //        assert(triangles != nullptr);
+    //        return new vertex_buffer_impl(triangles, n);
+    //    }
+    vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t count)
+    {
+        assert(vert != nullptr);
+        return new vertex_buffer_impl(vert, count);
+    }
+    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();

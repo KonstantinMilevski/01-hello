@@ -67,7 +67,7 @@ struct event
 {
     enum keys key;
     bool      is_down;
-    // double     timestamp;
+    double    timestamp;
 };
 struct vec2
 {

@@ -1,3 +1,5 @@
+﻿
+
 #include "engine.hxx"
 #include "texture_gl_es20.hxx"
 
@@ -102,9 +104,9 @@ struct rect
 struct block
 {
     block() = default;
-    block(vec2 pos, rect uv_pos, texture* tex)
-        : centr_pos_(pos)
-        , rect_pos_(uv_pos)
+    block(rect pos, rect uv_pos, texture* tex)
+        : xy_rect_(pos)
+        , uv_rect_(uv_pos)
         , tex_(tex)
     {
     }
@@ -125,24 +127,24 @@ struct block
         ///
         /// 0 left-up, clockwise
         /// vec2.pos
-        quad[0].pos.x = centr_pos_.x - cell_size * 0.5;
-        quad[0].pos.y = centr_pos_.y + cell_size * 0.5;
-        quad[1].pos.x = centr_pos_.x + cell_size * 0.5;
-        quad[1].pos.y = centr_pos_.y + cell_size * 0.5;
+        quad[0].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5f;
+        quad[0].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5f;
+        quad[1].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5f;
+        quad[1].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5f;
 
-        quad[2].pos.x = centr_pos_.x + cell_size * 0.5;
-        quad[2].pos.y = centr_pos_.y - cell_size * 0.5;
-        quad[3].pos.x = centr_pos_.x - cell_size * 0.5;
-        quad[3].pos.y = centr_pos_.y - cell_size * 0.5;
+        quad[2].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5f;
+        quad[2].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5f;
+        quad[3].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5f;
+        quad[3].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5f;
         /// vec2.uv, OpenGL texture lower left angle is (0, 0) coordinate
-        quad[3].uv.x = rect_pos_.pos.x;
-        quad[3].uv.y = rect_pos_.pos.y;
+        quad[3].uv.x = uv_rect_.pos.x;
+        quad[3].uv.y = uv_rect_.pos.y;
         quad[0].uv.x = quad[3].uv.x;
-        quad[0].uv.y += rect_pos_.size.y;
-        quad[1].uv.x += rect_pos_.size.x;
-        quad[1].uv.y += rect_pos_.size.y;
+        quad[0].uv.y += uv_rect_.size.y;
+        quad[1].uv.x += uv_rect_.size.x;
+        quad[1].uv.y += uv_rect_.size.y;
 
-        quad[2].uv.x += rect_pos_.size.x;
+        quad[2].uv.x += uv_rect_.size.x;
         quad[2].uv.y = quad[3].uv.y;
 
         for (auto& qu : quad)
@@ -156,24 +158,25 @@ struct block
         return quad_tri;
     }
 
-    vec2     centr_pos_;     /// centr of cell
-    rect     rect_pos_;      /// position of texture
+    rect     xy_rect_;       /// centr of cell
+    rect     uv_rect_;       /// position of texture
     texture* tex_ = nullptr; /// texture for cell
 };
 
 struct figure
 {
     std::vector<block> all_figure;
-    // figure() {}
+
     figure(block c, std::vector<vec2>& arr, vec2 pos)
         : cell_(c)
         , cell_pos{ arr }
         , fig_centr_pos(pos)
     {
-        block b00(arr[0], c.rect_pos_, c.tex_);
-        block b01(arr[1], c.rect_pos_, c.tex_);
-        block b02(arr[2], c.rect_pos_, c.tex_);
-        block b03(arr[3], c.rect_pos_, c.tex_);
+        vec2  xy_rect_size = cell_.xy_rect_.size;
+        block b00({ arr[0], xy_rect_size }, c.uv_rect_, c.tex_);
+        block b01({ arr[1], xy_rect_size }, c.uv_rect_, c.tex_);
+        block b02({ arr[2], xy_rect_size }, c.uv_rect_, c.tex_);
+        block b03({ arr[3], xy_rect_size }, c.uv_rect_, c.tex_);
         all_figure = { b00, b01, b02, b03 };
     }
     std::vector<vertex> one_fig_trianleses()
@@ -184,7 +187,8 @@ struct figure
         for (int i = 0; i < 4; i++)
         {
             cell_pos[i] *= cell_size;
-            block b(cell_pos[i], cell_.rect_pos_, cell_.tex_);
+            block b({ cell_pos[i], cell_.xy_rect_.size }, cell_.uv_rect_,
+                    cell_.tex_);
 
             std::vector<vertex> res = b.build_block();
             std::copy_n(begin(res), 6, std::back_inserter(vec_tr));
@@ -201,109 +205,89 @@ struct figure
         horisontal
     };
 };
+struct cell
+{
+    block one_cell;
+    bool  is_empty;
+};
 
 struct field
 {
-    field() = default;
-    field(rect r, block c, texture* t)
-        : rect_(r)
-        , cell_(c)
-        , tex_(t)
+    field(size_t row, size_t col, float size)
+        : col_(col)
+        , row_(row)
+        , cell_size_(size)
     {
-    }
-    std::vector<vec2> left_border;
-    std::vector<vec2> right_border;
-    void              border_coord()
-    {
-        size_t size = static_cast<size_t>(rect_.size.x * rect_.size.y);
-        std::vector<vec2> cells_coor(size);
-
-        std::vector<block> field_builded;
-        block              temp;
-        for (size_t i = 0; i < size; i++)
+        field_.resize(col * row);
+        for (auto i = 0; i < col * row; i++)
         {
-
-            temp.centr_pos_.x = i % 10 * cell_size + cell_size * 0.5f;
-            temp.centr_pos_.y = i / 10 * cell_size + cell_size * 0.5f;
-            /// transform to gl
-            temp.centr_pos_ -= gl_width * 0.5f;
-            field_builded.push_back(temp);
-        }
-
-        for (size_t i = 0; i < static_cast<size_t>(rect_.size.y); i++)
-        {
-            left_border.push_back(
-                field_builded[i + i * static_cast<size_t>(rect_.size.x)]
-                    .centr_pos_);
-            right_border.push_back(
-                field_builded[static_cast<size_t>(rect_.size.x) +
-                              i * static_cast<size_t>(rect_.size.x)]
-                    .centr_pos_);
+            field_[i].is_empty = true;
+            float x = size * static_cast<float>(i % col) + size * 0.5f;
+            float y = size * static_cast<float>(i / col) + size * 0.5f;
+            //            x -= 1.f; // cell_size_ * col_ * 0.5f;
+            //            y += 1.f; // cell_size_ * row_ * 0.5f;
+            rect rect_xy({ x, y }, { size, size });
+            rect rect_uv({ x, y }, { size, size });
+            field_[i].one_cell.xy_rect_ = rect_xy;
+            field_[i].one_cell.uv_rect_ = rect_uv;
         }
     }
 
-    std::vector<block> fill_field()
+    vec2 find_cell_pos(size_t n)
     {
-        size_t size = static_cast<size_t>(rect_.size.x * rect_.size.y);
-        std::vector<vec2> cells_coor(size);
-
-        std::vector<block> field_builded;
-        block              temp;
-        for (size_t i = 0; i < size; i++)
-        {
-
-            temp.centr_pos_.x = i % 10 * cell_size + cell_size * 0.5f;
-            temp.centr_pos_.y = i / 10 * cell_size + cell_size * 0.5f;
-            /// transform to gl
-            temp.centr_pos_ -= gl_width * 0.5f;
-            field_builded.push_back(temp);
-        }
-        return field_builded;
+        //        /// pos of cell, (0,0) left up
+        //        float x = cell_size_ * static_cast<float>(n % col_) -
+        //        cell_size_ * 0.5; float y = cell_size_ * n / col_ - cell_size_
+        //        * 0.5;
+        //        /// GL translate (0,0) centr
+        //        x -= cell_size_ * col_ * 0.5;
+        //        y += cell_size_ * row_ * 0.5;
+        //        return { x, y };
     }
-    std::vector<vertex> field_vertexes()
+    void set_texture(std::array<size_t, 4>& arr, block bl)
     {
+        assert(arr.size() < field_.size());
+        assert(nullptr != bl.tex_);
+        for (auto v : arr)
         {
-            std::array<vertex, 4> quad;
-            // you can change colore of texture with shift uv coord
-
-            /// P - pos_ center - OpenGL (0,0)
-            /// vertex 3 - texture (0,0)
-            /// 0 left-up, clockwise
-            /// vec2.pos
-
-            quad[0].pos.x = rect_.pos.x - rect_.size.x * 0.5;
-            quad[0].pos.y = rect_.pos.y + rect_.size.y * 0.5;
-            quad[1].pos.x = rect_.pos.x + rect_.size.x * 0.5;
-            quad[1].pos.y = rect_.pos.y + rect_.size.y * 0.5;
-            quad[2].pos.x = rect_.pos.x + rect_.size.x * 0.5;
-            quad[2].pos.y = rect_.pos.y - rect_.size.y * 0.5;
-            quad[3].pos.x = rect_.pos.x - rect_.size.x * 0.5;
-            quad[3].pos.y = rect_.pos.y - rect_.size.y * 0.5;
-            /// vec2.uv, OpenGL texture lower left angle is (0, 0)
-            /// coordinate
-            quad[3].uv.x = rect_.pos.x;
-            quad[3].uv.y = rect_.pos.y;
-            quad[0].uv.x = quad[3].uv.x;
-            quad[0].uv.y += rect_.size.y * 0.5;
-            ;
-            quad[1].uv.x += rect_.size.x;
-            quad[1].uv.y += rect_.size.y * 0.5;
-            quad[2].uv.x += rect_.size.x;
-            quad[2].uv.y = quad[3].uv.y;
-
-            std::vector<vertex> quad_tri = { quad[3], quad[1], quad[2],
-                                             quad[0], quad[3], quad[1] };
-            return quad_tri;
+            field_[v].one_cell.tex_     = bl.tex_;
+            field_[v].one_cell.uv_rect_ = bl.uv_rect_;
+            field_[v].is_empty          = false;
         }
     }
-
-    rect     rect_;
-    block    cell_;
-    bool     is_empty = true;
-    texture* tex_     = nullptr;
+    std::vector<vertex> construct_field_vertexes()
+    {
+        std::vector<vertex> res;
+        for (auto v : field_)
+        {
+            if (!v.is_empty)
+            {
+                std::vector<vertex> temp = v.one_cell.build_block();
+                res.insert(end(res), begin(temp), end(temp));
+            }
+        }
+        return res;
+    }
+    void build_figure(std::array<size_t, 4> figure, size_t pos, block& bl)
+    {
+        //        field_[pos]                       = bl;
+        //        field_[pos + field_width - 1]     = bl;
+        //        field_[pos + field_width]         = bl;
+        //        field_[pos + 2 * field_width - 1] = bl;
+    }
+    bool cell_status(size_t n)
+    {
+        if (field_.at(n).is_empty)
+            return true;
+    }
+    void              fill_cell(figure fig) {}
+    size_t            col_;
+    size_t            row_;
+    float             cell_size_;
+    std::vector<cell> field_;
 };
-
-int main()
+void check(field& fil, const figure& fig) {}
+int  main()
 {
 
     std::unique_ptr<engine, void (*)(engine*)> engine(create_engine(),
@@ -323,23 +307,35 @@ int main()
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-    texture* texture_window = engine->create_texture("frame.png");
-    if (nullptr == texture_window)
+
+    // block
+    rect  f_pos{ { 0.0, 0.0 }, { cell_size, cell_size } };
+    rect  r{ { 0, 0 }, { 1.f / 7.f, 1 } };
+    block f(f_pos, r, texture_figure);
+
+    rect     back_up_xy{ { 0.0, 0.0 }, { 2.f, 2.f } };
+    rect     back_up_uv{ { 0, 0 }, { 1.f, 1.f } };
+    texture* back_up_texture = engine->create_texture("frame.png");
+    if (nullptr == back_up_texture)
     {
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-
-    // block
-    vec2                f_pos{ 0.0, 0.0 };
-    rect                r{ { 0, 0 }, { 1.f / 7.f, 1 } };
-    block               f(f_pos, r, texture_figure);
-    std::vector<vertex> t_res = f.build_block();
-
-    vertex_buffer* one_quad_buff =
-        engine->create_vertex_buffer(&t_res[0], t_res.size());
-
+    block               back_up(back_up_xy, back_up_uv, back_up_texture);
+    std::vector<vertex> back_up_vert = back_up.build_block();
+    vertex_buffer*      back_up_vert_buff =
+        engine->create_vertex_buffer(&back_up_vert[0], back_up_vert.size());
     // end_block
+
+    // field
+    field                 main_field(3, 2, cell_size);
+    std::array<size_t, 4> fig_T{ 1, 2, 3, 5 };
+    main_field.set_texture(fig_T, f);
+    std::vector<vertex> temp_field_vertexes =
+        main_field.construct_field_vertexes();
+    assert(temp_field_vertexes.size() != 0);
+    vertex_buffer* field_buff = engine->create_vertex_buffer(
+        &temp_field_vertexes[0], temp_field_vertexes.size());
 
     // figure
     vec2              central_pos(0.0f, 0.0f);
@@ -349,44 +345,13 @@ int main()
         res1.push_back(figures_coord[i].pos);
     }
 
-    // field
-    rect  main_rect({ 0, 0 }, { static_cast<float>(field_width) * cell_size,
-                               static_cast<float>(field_height) * cell_size });
-    block temp;
-    field main_field(main_rect, temp, nullptr);
-    std::vector<block> game_field = main_field.fill_field();
-
     figure              fig_I(f, res1, central_pos);
     std::vector<block>  b = fig_I.all_figure;
-    std::vector<vertex> res2;
-    //    std::for_each(begin(game_field), std::end(game_field), [&](block
-    //    bl) {
-    //        if (bl.is_empty)
-    //        {
-    //            if (bl.centr_pos_ == b[0].centr_pos_)
-    //                bl = b[0];
-    //            else if (bl.centr_pos_ == b[1].centr_pos_)
-    //                bl = b[1];
-    //            else if (bl.centr_pos_ == b[2].centr_pos_)
-    //                bl = b[2];
-    //            else if (bl.centr_pos_ == b[3].centr_pos_)
-    //                bl = b[3];
-    //        }
-    //    });
     std::vector<vertex> res{ fig_I.one_fig_trianleses() };
     vertex_buffer*      vert_buff =
         engine->create_vertex_buffer(&res[0], res.size());
 
-    std::vector<vertex> window_vertex{ main_field.field_vertexes() };
-
-    vertex_buffer* vert_buff_window =
-        engine->create_vertex_buffer(&window_vertex[0], window_vertex.size());
-
     // end_figure
-
-    // start field;
-
-    //
 
     vec2        current_pos(0.0f, 0.0f);
     const float pi = 3.1415926f;
@@ -396,17 +361,17 @@ int main()
     bool continue_loop = true;
     while (continue_loop)
     {
-        event game_event;
-        bool  check = true;
-        while (engine->read_event(game_event) && check)
+        float time = engine->get_time_from_init();
+        timer += time;
+        if (timer >= dt)
         {
-            float time = engine->get_time_from_init();
-            timer += time;
-            if (timer >= dt)
-            {
-                current_pos.y -= cell_size * 0.2;
-                timer = 0.f;
-            }
+            current_pos.y -= cell_size * 0.01;
+            timer = 0.f;
+        }
+        event game_event;
+        while (engine->read_event(game_event))
+        {
+
             switch (game_event.key)
             {
                 case keys::exit:
@@ -422,7 +387,6 @@ int main()
                         {
                             current_pos.x -= cell_size;
                         }
-                        check = false;
                         break;
 
                         // game_event.is_down == false;
@@ -437,7 +401,6 @@ int main()
                         {
                             current_pos.x += cell_size;
                         }
-                        check = false;
                         break;
                     }
                 case keys::rotate:
@@ -445,10 +408,7 @@ int main()
                     {
                         std::cout << "keys::rotate" << std::endl;
                         current_direction += pi * 0.5f;
-
-                        check = false;
                         break;
-                        // current_direction = pi / 2.f;
                     }
                 default:
                     break;
@@ -465,8 +425,14 @@ int main()
         // engine->render_tetris(*one_quad_buff, f.tex_);
         //  engine->render_tet(*one_quad_buff, f.tex_, matrix::identity());
         // engine->render_tetris(*vert_buff, fig_I.cell.tex_);
-        engine->render_tet(*vert_buff_window, texture_window,
-                           matrix::identity());
+
+        //        engine->render_tet(*back_up_buff, back_up_texture,
+        //                           matrix::identity() *
+        //                               matrix::scale(window_scale * 20, 20
+        //                               * 1.0f));
+        engine->render_tet(*back_up_vert_buff, back_up_texture,
+                           screen_aspect); // back_ups
+        engine->render_tet(*field_buff, texture_figure, screen_aspect);
         engine->render_tet(*vert_buff, texture_figure, m);
 
         engine->swap_buffer();
