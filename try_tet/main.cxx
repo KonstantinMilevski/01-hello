@@ -67,20 +67,24 @@ float        first_pos;
 static float window_scale = static_cast<float>(screen_height) / screen_width;
 /// field 10x25 GL from -0.5 to 0.5 gl_width     =1.f
 /// field 10x25 GL from -0.1 to 0.1 gl_width     =2.f
-size_t field_height = 20;
-size_t field_width  = 10;
-float  gl_height    = 2.f;
-float  cell_size    = gl_height / field_height;
-float  gl_width     = cell_size * field_width; // 2.f;
-int    n            = 4;
-float  left_border  = -gl_width * 0.5; // + cell_size * 0.5;
-float  right_border = gl_width * 0.5;  // - cell_size * 0.5;
-float  dt           = 1.f;
-float  timer        = 0.f;
+size_t field_height  = 20;
+size_t field_width   = 10;
+float  gl_height     = 2.f;
+float  cell_size     = gl_height / field_height;
+float  gl_width      = cell_size * field_width; // 2.f;
+int    n             = 4;
+float  left_border   = -gl_width * 0.5; // + cell_size * 0.5;
+float  right_border  = gl_width * 0.5;  // - cell_size * 0.5;
+float  bottom_border = gl_height * 0.5;
+float  dt            = 1.f;
+float  timer         = 0.f;
 
-bool check_border(float& x)
+bool check_border(vec2& pos)
 {
-    if (x < left_border + cell_size * 0.5 || x > right_border - cell_size * 0.5)
+    if (pos.x < left_border + cell_size * 0.5 ||
+        pos.x > right_border - cell_size * 0.5)
+        return false;
+    if (pos.y < -2 * bottom_border + cell_size * 3)
         return false;
     else
         return true;
@@ -365,8 +369,12 @@ int  main()
         timer += time;
         if (timer >= dt)
         {
-            current_pos.y -= cell_size * 0.01;
+            current_pos.y -= cell_size * 0.1;
             timer = 0.f;
+            if (!check_border(current_pos))
+            {
+                current_pos.y += cell_size * 0.1;
+            }
         }
         event game_event;
         while (engine->read_event(game_event))
@@ -383,7 +391,7 @@ int  main()
                         std::cout << "keys::right" << std::endl;
                         current_pos.x += cell_size;
                         float a = right_border;
-                        if (!check_border(current_pos.x))
+                        if (!check_border(current_pos))
                         {
                             current_pos.x -= cell_size;
                         }
@@ -397,7 +405,7 @@ int  main()
                         std::cout << "keys::left" << std::endl;
                         current_pos.x -= cell_size;
 
-                        if (!check_border(current_pos.x))
+                        if (!check_border(current_pos))
                         {
                             current_pos.x += cell_size;
                         }
