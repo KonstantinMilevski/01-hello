@@ -379,6 +379,7 @@ public:
                 void main()
                 {
                 gl_FragColor = texture2D(s_texture, v_tex_coord); //* v_color;
+                gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0)+texture2D(s_texture, v_tex_coord);
                 }
                 )",
             { { 0, "a_position" },
@@ -417,7 +418,10 @@ public:
             { { 0, "a_position" },
               /*{ 1, "a_color" }, */ { 2, "a_tex_coord" } });
         shader01->use();
-
+        glEnable(GL_BLEND);
+        GL_CHECK()
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK()
         return "";
     }
     void uninitialize() override final
@@ -535,8 +539,8 @@ public:
         );
         GL_CHECK()
         /// update a subset of a buffer object's data store
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
-        GL_CHECK()
+        //        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
+        //        GL_CHECK()
 
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),

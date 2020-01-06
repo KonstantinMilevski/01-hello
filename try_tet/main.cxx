@@ -13,16 +13,16 @@
 // const int m          = 10;
 // const int n          = 10;
 // int       fild[m][n] = { 0 };
-//// enum class fig_type
-//{
-//    type_I,
-//    type_S,
-//    type_Z,
-//    type_T,
-//    type_L,
-//    type_J,
-//    type_O
-//};
+// int figures[7][4]=
+//    {
+//        1,3,5,7, // I
+//        2,4,5,7, // S
+//        3,5,4,6, // Z
+//        3,5,4,7, // T
+//        2,3,5,7, // L
+//        3,5,7,6, // J
+//        2,3,4,5, // O
+//    };
 
 /// each position is centr
 static const std::vector<vertex> figures_coord = {
@@ -151,12 +151,6 @@ struct block
         quad[2].uv.x += uv_rect_.size.x;
         quad[2].uv.y = quad[3].uv.y;
 
-        for (auto& qu : quad)
-        {
-            /// scale to GL_window
-            // qu.pos /= 2.f;
-        }
-
         std::vector<vertex> quad_tri = { quad[3], quad[1], quad[2],
                                          quad[0], quad[3], quad[1] };
         return quad_tri;
@@ -183,6 +177,7 @@ struct figure
         block b03({ arr[3], xy_rect_size }, c.uv_rect_, c.tex_);
         all_figure = { b00, b01, b02, b03 };
     }
+
     std::vector<vertex> one_fig_trianleses()
     {
         std::vector<vertex> vec_tr;
@@ -211,7 +206,7 @@ struct figure
 };
 struct cell
 {
-    block one_cell;
+    block cell_;
     bool  is_empty;
 };
 
@@ -232,41 +227,34 @@ struct field
             //            y += 1.f; // cell_size_ * row_ * 0.5f;
             rect rect_xy({ x, y }, { size, size });
             rect rect_uv({ x, y }, { size, size });
-            field_[i].one_cell.xy_rect_ = rect_xy;
-            field_[i].one_cell.uv_rect_ = rect_uv;
+            field_[i].cell_.xy_rect_ = rect_xy;
+            field_[i].cell_.uv_rect_ = rect_uv;
         }
     }
 
-    vec2 find_cell_pos(size_t n)
-    {
-        //        /// pos of cell, (0,0) left up
-        //        float x = cell_size_ * static_cast<float>(n % col_) -
-        //        cell_size_ * 0.5; float y = cell_size_ * n / col_ - cell_size_
-        //        * 0.5;
-        //        /// GL translate (0,0) centr
-        //        x -= cell_size_ * col_ * 0.5;
-        //        y += cell_size_ * row_ * 0.5;
-        //        return { x, y };
-    }
-    void set_texture(std::array<size_t, 4>& arr, block bl)
+    void set_figure(std::array<size_t, 4>& arr, block bl)
     {
         assert(arr.size() < field_.size());
         assert(nullptr != bl.tex_);
         for (auto v : arr)
         {
-            field_[v].one_cell.tex_     = bl.tex_;
-            field_[v].one_cell.uv_rect_ = bl.uv_rect_;
-            field_[v].is_empty          = false;
+            size_t x = v % 2;
+            size_t y = v / 2;
+
+            field_[x + y * col_].cell_.tex_     = bl.tex_;
+            field_[x + y * col_].cell_.uv_rect_ = bl.uv_rect_;
+            field_[x + y * col_].is_empty       = false;
         }
     }
+    vec2                centr_figure();
     std::vector<vertex> construct_field_vertexes()
     {
         std::vector<vertex> res;
-        for (auto v : field_)
+        for (auto one_cell : field_)
         {
-            if (!v.is_empty)
+            if (!one_cell.is_empty)
             {
-                std::vector<vertex> temp = v.one_cell.build_block();
+                std::vector<vertex> temp = one_cell.cell_.build_block();
                 res.insert(end(res), begin(temp), end(temp));
             }
         }
@@ -291,7 +279,8 @@ struct field
     std::vector<cell> field_;
 };
 void check(field& fil, const figure& fig) {}
-int  main()
+
+int main()
 {
 
     std::unique_ptr<engine, void (*)(engine*)> engine(create_engine(),
@@ -332,9 +321,9 @@ int  main()
     // end_block
 
     // field
-    field                 main_field(3, 2, cell_size);
+    field                 main_field(10, 10, cell_size);
     std::array<size_t, 4> fig_T{ 1, 2, 3, 5 };
-    main_field.set_texture(fig_T, f);
+    main_field.set_figure(fig_T, f);
     std::vector<vertex> temp_field_vertexes =
         main_field.construct_field_vertexes();
     assert(temp_field_vertexes.size() != 0);
@@ -365,17 +354,17 @@ int  main()
     bool continue_loop = true;
     while (continue_loop)
     {
-        float time = engine->get_time_from_init();
-        timer += time;
-        if (timer >= dt)
-        {
-            current_pos.y -= cell_size * 0.1;
-            timer = 0.f;
-            if (!check_border(current_pos))
-            {
-                current_pos.y += cell_size * 0.1;
-            }
-        }
+        //        float time = engine->get_time_from_init();
+        //        timer += time;
+        //        if (timer >= dt)
+        //        {
+        //            current_pos.y -= cell_size * 0.01;
+        //            timer = 0.f;
+        //            if (!check_border(current_pos))
+        //            {
+        //                current_pos.y += cell_size * 0.01;
+        //            }
+        //        }
         event game_event;
         while (engine->read_event(game_event))
         {
@@ -423,14 +412,13 @@ int  main()
             }
         }
 
-        vec2   start_pos(0.0f, 1.0f - 1.5f * cell_size);
+        vec2   start_pos(0.0f, 1.0f - 0.5);
         matrix start         = matrix::move(start_pos);
         matrix move          = matrix::move(current_pos);
         matrix screen_aspect = matrix::scale(window_scale, 1.0f);
         matrix rot           = matrix::rotation(current_direction);
         matrix m             = rot * start * move * screen_aspect;
 
-        // engine->render_tetris(*one_quad_buff, f.tex_);
         //  engine->render_tet(*one_quad_buff, f.tex_, matrix::identity());
         // engine->render_tetris(*vert_buff, fig_I.cell.tex_);
 
@@ -438,9 +426,12 @@ int  main()
         //                           matrix::identity() *
         //                               matrix::scale(window_scale * 20, 20
         //                               * 1.0f));
-        engine->render_tet(*back_up_vert_buff, back_up_texture,
-                           screen_aspect); // back_ups
-        engine->render_tet(*field_buff, texture_figure, screen_aspect);
+        //        engine->render_tet(*back_up_vert_buff, back_up_texture,
+        //                           screen_aspect); // back_ups
+        //        engine->render_tet(*field_buff, texture_figure,
+        //                           rot * matrix::move(current_pos) *
+        //                               matrix::scale(window_scale, 1.0f));
+        // engine->render_tetris(*field_buff, texture_figure, );
         engine->render_tet(*vert_buff, texture_figure, m);
 
         engine->swap_buffer();
