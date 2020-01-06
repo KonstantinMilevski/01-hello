@@ -8,6 +8,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
 
 // const int m          = 10;
@@ -221,8 +222,8 @@ struct field
         for (auto i = 0; i < col * row; i++)
         {
             field_[i].is_empty = true;
-            float x = size * static_cast<float>(i % col) + size * 0.5f;
-            float y = size * static_cast<float>(i / col) + size * 0.5f;
+            float x = size * static_cast<float>(i % row_) + size * 0.5f;
+            float y = size * static_cast<float>(i / row_) + size * 0.5f;
             //            x -= 1.f; // cell_size_ * col_ * 0.5f;
             //            y += 1.f; // cell_size_ * row_ * 0.5f;
             rect rect_xy({ x, y }, { size, size });
@@ -231,7 +232,111 @@ struct field
             field_[i].cell_.uv_rect_ = rect_uv;
         }
     }
+    vec2 get_position(size_t n) { return field_.at(n).cell_.xy_rect_.pos; }
+    // size_t get_vector_pos() {}
+    void set_position(block& bl, size_t n)
+    {
+        assert(n >= 0 && n < col_ * row_);
+        vec2 pos                        = field_.at(n).cell_.xy_rect_.pos;
+        field_.at(n).cell_              = bl;
+        field_.at(n).cell_.xy_rect_.pos = pos;
+    }
 
+    void set_one_cell(block bl)
+    {
+        assert(nullptr != bl.tex_);
+        float x = bl.xy_rect_.pos.x;
+        float y = bl.xy_rect_.pos.y;
+
+        field_[x + y * col_].cell_.tex_     = bl.tex_;
+        field_[x + y * col_].cell_.uv_rect_ = bl.uv_rect_;
+        // field_[x + y * col_].is_empty       = false;
+    }
+    std::vector<vertex> construct_one_moving_cell()
+    {
+        std::vector<vertex> res;
+        for (auto cell : field_)
+        {
+            if (cell.is_empty && cell.cell_.tex_ != nullptr)
+            {
+                std::vector<vertex> temp = cell.cell_.build_block();
+                res.insert(end(res), begin(temp), end(temp));
+            }
+        }
+        assert(res.size() != 0);
+        return res;
+    }
+    bool change_pos(size_t pos_old, size_t pos_new, bool flag) // left flag
+    {
+        if (pos_new >= 0 && pos_new < col_ * row_)
+        {
+            float d_pos_x_right =
+                field_.at(pos_old).cell_.xy_rect_.pos.x -
+                field_.at(row_ * col_ - 1).cell_.xy_rect_.pos.x;
+            float d_pos_x_left = field_.at(pos_old).cell_.xy_rect_.pos.x -
+                                 field_.at(0).cell_.xy_rect_.pos.x;
+            if (d_pos_x_left != 0 && flag)
+
+            {
+                if (field_.at(pos_old).cell_.tex_ != nullptr)
+                {
+                    field_.at(pos_new).cell_.tex_ =
+                        field_.at(pos_old).cell_.tex_;
+                    field_.at(pos_new).cell_.uv_rect_ =
+                        field_.at(pos_old).cell_.uv_rect_;
+                    field_.at(pos_old).cell_.tex_ = nullptr;
+                    return true;
+                }
+                else
+                {
+                    std::cout << "Cell not empty" << std::endl;
+                    return false;
+                }
+            }
+            else if (d_pos_x_right != 0 && !flag)
+            {
+                if (field_.at(pos_old).cell_.tex_ != nullptr)
+                {
+                    field_.at(pos_new).cell_.tex_ =
+                        field_.at(pos_old).cell_.tex_;
+                    field_.at(pos_new).cell_.uv_rect_ =
+                        field_.at(pos_old).cell_.uv_rect_;
+                    field_.at(pos_old).cell_.tex_ = nullptr;
+                    return true;
+                }
+                else
+                {
+                    std::cout << "Cell not empty" << std::endl;
+                    return false;
+                }
+            }
+
+            return false;
+        }
+    }
+    bool moving(int n) // 1 -left, 2-right
+    {
+        int k;
+        for (int i = 0; i < col_ * row_; i++)
+        {
+            if (field_[i].is_empty && field_[i].cell_.tex_ != nullptr)
+            {
+                k = i;
+            }
+        }
+        //        auto it = std::find(field_.begin(), field_.end(),
+        //                            fig); //(begin(field_), end(field_),
+        //                            fig);
+        if (k >= 0 && k < col_ * row_)
+        {
+            if (1 == n)
+            {
+                if (field_[k - 1].is_empty && (k - 1) % col_ && (k - 1) >= 0)
+                    return true;
+            }
+        }
+        return false;
+    }
     void set_figure(std::array<size_t, 4>& arr, block bl)
     {
         assert(arr.size() < field_.size());
@@ -293,63 +398,36 @@ int main()
         return EXIT_FAILURE;
     }
 
-    texture* texture_figure = engine->create_texture("blocks1.png");
+    texture* text_main_bar = engine->create_texture("blocks1.png");
 
-    if (nullptr == texture_figure)
+    if (nullptr == text_main_bar)
     {
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-
-    // block
-    rect  f_pos{ { 0.0, 0.0 }, { cell_size, cell_size } };
-    rect  r{ { 0, 0 }, { 1.f / 7.f, 1 } };
-    block f(f_pos, r, texture_figure);
-
-    rect     back_up_xy{ { 0.0, 0.0 }, { 2.f, 2.f } };
-    rect     back_up_uv{ { 0, 0 }, { 1.f, 1.f } };
     texture* back_up_texture = engine->create_texture("frame.png");
     if (nullptr == back_up_texture)
     {
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-    block               back_up(back_up_xy, back_up_uv, back_up_texture);
-    std::vector<vertex> back_up_vert = back_up.build_block();
-    vertex_buffer*      back_up_vert_buff =
-        engine->create_vertex_buffer(&back_up_vert[0], back_up_vert.size());
-    // end_block
+    /// field srart
+    rect bloc_pos({ 0.f, 0.f }, { cell_size, cell_size });
+    rect bloc_text({ 0.f, 0.f }, { 1.f / 7, 1.f });
 
-    // field
-    field                 main_field(10, 10, cell_size);
-    std::array<size_t, 4> fig_T{ 1, 2, 3, 5 };
-    main_field.set_figure(fig_T, f);
-    std::vector<vertex> temp_field_vertexes =
-        main_field.construct_field_vertexes();
-    assert(temp_field_vertexes.size() != 0);
-    vertex_buffer* field_buff = engine->create_vertex_buffer(
-        &temp_field_vertexes[0], temp_field_vertexes.size());
+    block first_bl(bloc_pos, bloc_text, text_main_bar);
+    field main_field(10, 2, cell_size);
+    int   pos = 1;
+    // main_field.set_one_cell(first_bl);
+    main_field.set_position(first_bl, pos);
+    std::vector<vertex> one_block_vert;
+    vertex_buffer*      moving_vertex_buffer;
 
-    // figure
-    vec2              central_pos(0.0f, 0.0f);
-    std::vector<vec2> res1;
-    for (int i = n; i < n + 4; i++)
-    {
-        res1.push_back(figures_coord[i].pos);
-    }
+    /// field end
 
-    figure              fig_I(f, res1, central_pos);
-    std::vector<block>  b = fig_I.all_figure;
-    std::vector<vertex> res{ fig_I.one_fig_trianleses() };
-    vertex_buffer*      vert_buff =
-        engine->create_vertex_buffer(&res[0], res.size());
-
-    // end_figure
-
-    vec2        current_pos(0.0f, 0.0f);
+    // vec2        current_pos(main_field.get_position(pos));
     const float pi = 3.1415926f;
     float       current_direction{ 0.f };
-    float       current_scale{ 1.f };
 
     bool continue_loop = true;
     while (continue_loop)
@@ -378,11 +456,11 @@ int main()
                     if (engine->is_key_down(keys::right))
                     {
                         std::cout << "keys::right" << std::endl;
-                        current_pos.x += cell_size;
-                        float a = right_border;
-                        if (!check_border(current_pos))
+
+                        if (main_field.change_pos(pos, pos + 1, false))
                         {
-                            current_pos.x -= cell_size;
+                            // if (main_field.moving(1))
+                            pos++;
                         }
                         break;
 
@@ -392,12 +470,12 @@ int main()
                     if (engine->is_key_down(keys::left))
                     {
                         std::cout << "keys::left" << std::endl;
-                        current_pos.x -= cell_size;
-
-                        if (!check_border(current_pos))
+                        if (main_field.change_pos(pos, pos - 1, true))
                         {
-                            current_pos.x += cell_size;
+                            // if (main_field.moving(1))
+                            pos--;
                         }
+
                         break;
                     }
                 case keys::rotate:
@@ -411,28 +489,19 @@ int main()
                     break;
             }
         }
+        one_block_vert       = main_field.construct_one_moving_cell();
+        moving_vertex_buffer = engine->create_vertex_buffer(
+            &one_block_vert[0], one_block_vert.size());
 
-        vec2   start_pos(0.0f, 1.0f - 0.5);
-        matrix start         = matrix::move(start_pos);
-        matrix move          = matrix::move(current_pos);
+        vec2   start_pos(main_field.get_position(4)); //(0.0f, 1.0f - 0.5);
+        matrix start = matrix::move(start_pos);
+        // matrix move          = matrix::move(current_pos);
         matrix screen_aspect = matrix::scale(window_scale, 1.0f);
         matrix rot           = matrix::rotation(current_direction);
-        matrix m             = rot * start * move * screen_aspect;
+        matrix m             = rot * start /** move */ * screen_aspect;
 
-        //  engine->render_tet(*one_quad_buff, f.tex_, matrix::identity());
-        // engine->render_tetris(*vert_buff, fig_I.cell.tex_);
-
-        //        engine->render_tet(*back_up_buff, back_up_texture,
-        //                           matrix::identity() *
-        //                               matrix::scale(window_scale * 20, 20
-        //                               * 1.0f));
-        //        engine->render_tet(*back_up_vert_buff, back_up_texture,
-        //                           screen_aspect); // back_ups
-        //        engine->render_tet(*field_buff, texture_figure,
-        //                           rot * matrix::move(current_pos) *
-        //                               matrix::scale(window_scale, 1.0f));
-        // engine->render_tetris(*field_buff, texture_figure, );
-        engine->render_tet(*vert_buff, texture_figure, m);
+        engine->render_tet(*moving_vertex_buffer, text_main_bar,
+                           matrix::scale(window_scale, 1.0f));
 
         engine->swap_buffer();
     }
