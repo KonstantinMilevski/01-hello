@@ -13,7 +13,7 @@ add_library(engine SHARED engine.cxx
                                shader_gl_es20.cxx
                                shader_gl_es20.hxx
                                stb_image.h
-                               )
+                                                              )
 
 target_compile_features(engine PUBLIC cxx_std_17)
 set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
@@ -28,7 +28,7 @@ target_link_libraries(engine PRIVATE
                -lGL
                )
 
-add_executable(game main.cxx)
+add_executable(game main.cxx field.hxx field.cxx)
 target_compile_features(game PUBLIC cxx_std_17)
 target_link_libraries(game PRIVATE engine)
 

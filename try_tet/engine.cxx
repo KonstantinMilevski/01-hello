@@ -434,81 +434,6 @@ public:
         SDL_Quit();
     }
 
-    bool load_texture(std::string_view path, unsigned long w,
-                      unsigned long h) final
-    {
-        //        // size_t                 i =
-        //        std::filesystem::file_size(path); std::vector<std::byte>
-        //        png_file_in_memory; std::ifstream          ifs(path.data(),
-        //        std::ios::binary); if (!ifs)
-        //        {
-        //            return false;
-        //        }
-        //        ifs.seekg(0, std::ios_base::end);
-        //        size_t pos_end_file = static_cast<size_t>(ifs.tellg());
-        //        png_file_in_memory.resize(pos_end_file);
-        //        ifs.seekg(0, std::ios_base::beg);
-        //        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
-        //                 static_cast<std::streamsize>(png_file_in_memory.size()));
-        //        if (!ifs.good())
-        //        {
-        //            return false;
-        //        }
-        //        // std::reverse(png_file_in_memory.begin(),
-        //        // png_file_in_memory.end());
-
-        //        //        unsigned long          w{ 0 };
-        //        //        unsigned long          h{ 0 };
-        //        std::vector<std::byte> image;
-        //        int error = decodePNG(image, w, h, &png_file_in_memory[0],
-        //                              png_file_in_memory.size(), false);
-        //        if (0 != error)
-        //        {
-        //            std::cerr << "error: " << error << std::endl;
-        //            return false;
-        //        }
-        //        text_width       = w;
-        //        text_height      = h;
-        //        GLuint tex_handl = 0;
-        //        /// gen name for text
-        //        glGenTextures(1, &tex_handl);
-        //        GL_CHECK()
-        //        /// set current text
-        //        glBindTexture(GL_TEXTURE_2D, tex_handl);
-        //        GL_CHECK()
-
-        //        GLint mipmap_level = 0;
-        //        GLint border       = 0;
-        //        //происходит выделение памяти и загрузка в нее наших данных.
-        //        // clang-format off
-        //        glTexImage2D(GL_TEXTURE_2D, // Specifies the target texture of
-        //        the active texture unit
-        //                     mipmap_level,  // Specifies the level-of-detail
-        //                     number. Level 0 is the base image level GL_RGBA,
-        //                     // Specifies the internal format of the texture
-        //                     static_cast<GLsizei>(w),
-        //                     static_cast<GLsizei>(h),
-        //                     border,        // Specifies the width of the
-        //                     border. Must be 0. For GLES 2.0 GL_RGBA,       //
-        //                     Specifies the format of the texel data. Must
-        //                     match internalformat GL_UNSIGNED_BYTE, //
-        //                     Specifies the data type of the texel data
-        //                     &image[0]);    // Specifies a pointer to the
-        //                     image data in memory
-        //        // clang-format on
-        //        GL_CHECK()
-        //        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-        //        //        GL_CLAMP_TO_EDGE); GL_CHECK()
-        //        glTexParameteri(GL_TEXTURE_2D,
-        //        //        GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); GL_CHECK()
-
-        //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-        //        GL_NEAREST); GL_CHECK() glTexParameteri(GL_TEXTURE_2D,
-        //        GL_TEXTURE_MAG_FILTER, GL_NEAREST); GL_CHECK()
-
-        return true;
-    }
-
     void render_tetris(const vertex_buffer& buff, texture* tex) final
     {
 
@@ -675,6 +600,7 @@ public:
                 return false;
             }
         }
+        return false;
     }
     bool is_key_down(const enum keys key) final
     {

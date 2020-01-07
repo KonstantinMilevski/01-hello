@@ -208,6 +208,4 @@ public:
     virtual void destroy_texture(texture* t)                            = 0;
     virtual void render_tetris(const vertex_buffer& buff, texture* tex) = 0;
     virtual void swap_buffer()                                          = 0;
-    virtual bool load_texture(std::string_view path, unsigned long w,
-                              unsigned long h)                          = 0;
 };
