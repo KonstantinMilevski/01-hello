@@ -113,8 +113,8 @@ int main()
     // vec2        current_pos(main_field.get_position(pos));
     const float pi = 3.1415926f;
     float       current_direction{ 0.f };
-
-    bool continue_loop = true;
+    int         pos           = 0;
+    bool        continue_loop = true;
     while (continue_loop)
     {
         //        float time = engine->get_time_from_init();
@@ -141,31 +141,18 @@ int main()
                     if (engine->is_key_down(keys::right))
                     {
                         std::cout << "keys::right" << std::endl;
-
-                        //                        if (main_field.change_pos(pos,
-                        //                        pos + 1, false))
-                        //                        {
-                        //                            // if
-                        //                            (main_field.moving(1))
-                        //                            pos++;
-                        //                        }
-                        break;
-
-                        // game_event.is_down == false;
+                        pos++;
+                        main_field.clear_cells();
+                        if (main_field.set_figure(f_01, bl_01, pos))
+                            break;
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        //                        std::cout << "keys::left" <<
-                        //                        std::endl; if
-                        //                        (main_field.change_pos(pos,
-                        //                        pos - 1, true))
-                        //                        {
-                        //                            // if
-                        //                            (main_field.moving(1))
-                        //                            pos--;
-                        //                        }
-
+                        pos--;
+                        main_field.clear_cells();
+                        if (main_field.set_figure(f_01, bl_01, pos))
+                            break;
                         break;
                     }
                 case keys::rotate:
@@ -179,6 +166,9 @@ int main()
                     break;
             }
         }
+        arr_block_vert     = main_field.occupied_cells();
+        arr_block_vert_buf = engine->create_vertex_buffer(
+            &arr_block_vert[0], arr_block_vert.size());
 
         //        //  vec2   start_pos(main_field.get_position(4));
         //        //(0.0f, 1.0f - 0.5);

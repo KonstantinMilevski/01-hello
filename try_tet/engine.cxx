@@ -509,8 +509,8 @@ public:
         shader01->set_uniform("u_matrix", m);
 
         /// generate a new VBO and get the associated ID
-        glGenBuffers(1, &gl_default_vbo);
-        GL_CHECK()
+        //        glGenBuffers(1, &gl_default_vbo);
+        //        GL_CHECK()
 
         assert(gl_default_vbo != 0);
         glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
