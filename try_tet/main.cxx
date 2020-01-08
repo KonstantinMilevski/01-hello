@@ -19,7 +19,7 @@ int figures[7][4] = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-
+std::array<size_t, 4> fig_S{ 2, 4, 5, 7 };
 /// each position is centr
 static const std::vector<vertex> figures_coord = {
     { 0.0, 1.5, 0.0, 0.0 },
@@ -98,9 +98,12 @@ int main()
     /// block end
 
     /// field srart
-    field main_field(10, 10);
-    // main_field.set_block(bl_03, 99);
+    field main_field(field_width, field_height);
+    main_field.set_block(bl_03, field_height * field_width - 1);
     main_field.set_block(bl_02, 0);
+    figure f_01(fig_S);
+    main_field.set_figure(f_01, bl_01, 25);
+
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
     vertex_buffer*      arr_block_vert_buf =
         engine->create_vertex_buffer(&arr_block_vert[0], arr_block_vert.size());
@@ -178,18 +181,20 @@ int main()
         }
 
         //        //  vec2   start_pos(main_field.get_position(4));
-        //        //(0.0f, 1.0f - 0.5); matrix start = matrix::move(start_pos);
-        //        // matrix move          = matrix::move(current_pos);
-        //        matrix screen_aspect = matrix::scale(window_scale, 1.0f);
-        //        matrix rot           = matrix::rotation(current_direction);
-        //        matrix m             = rot * start /** move */ *
-        //        screen_aspect;
+        //        //(0.0f, 1.0f - 0.5);
+        vec2 zero_pos(cell_size * field_width * (-0.5),
+                      cell_size * field_height * (-0.5));
+        // vec2   zero_pos(-1.f, -1.f);
+        matrix zero = matrix::move(zero_pos);
+        // matrix move          = matrix::move(current_pos);
+        matrix screen_aspect =
+            matrix::scale(window_scale * 0.009f, 1.0f * 0.009f);
+        // matrix rot           = matrix::rotation(current_direction);
+        matrix m = zero * screen_aspect;
         //        engine->render_tet(*one_block_vert_buf, text_main_bar,
         //                           matrix::scale(window_scale, 1.0f) *
         //                               matrix::scale(0.01f, .01f));
-        engine->render_tet(*arr_block_vert_buf, text_main_bar,
-                           matrix::scale(window_scale, 1.0f) *
-                               matrix::scale(0.01f, .01f));
+        engine->render_tet(*arr_block_vert_buf, text_main_bar, m);
 
         engine->swap_buffer();
     }
