@@ -95,30 +95,21 @@ int main()
     block bl_03(bloc_pos, bloc_text, text_main_bar);
 
     std::vector<vertex> one_block_vert = bl_01.build_block();
-    vertex_buffer*      one_block_vert_buf =
-        engine->create_vertex_buffer(&one_block_vert[0], one_block_vert.size());
-    /// block end
 
     /// field srart
     field main_field(field_width, field_height);
     field back_up_field(field_width, field_height);
-    main_field.set_block_on_field(bl_03, field_height * field_width - 1);
-    main_field.set_block_on_field(bl_02, 0);
+
     figure f_01(fig_Z);
     figure f_02(fig_S);
     f_02.figure_change_position(164);
 
-    main_field.set_figure(f_02, bl_01);
-
-    main_field.set_figure(f_01, bl_01);
-
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
-    vertex_buffer*      arr_block_vert_buf =
-        engine->create_vertex_buffer(&arr_block_vert[0], arr_block_vert.size());
+    vertex_buffer*      arr_block_vert_buf;
 
     int    d_pos         = 1;
     float  start_timer   = engine->get_time_from_init();
-    float  dt            = 0.5;
+    float  dt            = 0.2;
     size_t count         = 0;
     bool   continue_loop = true;
     while (continue_loop)
@@ -127,10 +118,10 @@ int main()
         float timer     = curr_time - start_timer;
         if (timer >= dt)
         {
-            main_field.clear_cells();
-            if (f_02.figure_move_down())
+            main_field.clear_position(f_02);
+            if (main_field.set_figure(f_02, bl_01))
             {
-                main_field.set_figure(f_02, bl_01);
+                f_02.figure_move_down();
             }
             else
             {
@@ -142,7 +133,6 @@ int main()
                     figure f_03(fig_T);
                     f_02 = f_03;
                     f_02.figure_change_position(164);
-                    back_up_field = main_field;
                 }
             }
             start_timer = curr_time;
@@ -160,53 +150,50 @@ int main()
                     if (engine->is_key_down(keys::right))
                     {
                         std::cout << "keys::right" << std::endl;
-                        main_field.clear_cells();
+                        main_field.clear_position(f_02);
                         if (f_02.figure_horiszontal_move(d_pos))
                         {
-                            main_field.set_figure(f_02, bl_01);
-                            break;
+                            if (main_field.set_figure(f_02, bl_01))
+                                break;
                         }
                         else
                         {
-                            main_field.set_figure(f_02, bl_01);
-                            break;
+                            if (main_field.set_figure(f_02, bl_01))
+                                break;
                         }
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        main_field.clear_cells();
+                        main_field.clear_position(f_02);
                         if (f_02.figure_horiszontal_move(-d_pos))
                         {
-                            main_field.set_figure(f_02, bl_01);
-                            break;
+                            if (main_field.set_figure(f_02, bl_01))
+                                break;
                         }
                         else
                         {
-                            main_field.set_figure(f_02, bl_01);
-                            break;
+                            if (main_field.set_figure(f_02, bl_01))
+                                break;
                         }
                     }
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
                     {
-
-                        main_field.clear_cells();
+                        main_field.clear_position(f_02);
                         std::cout << "keys::rotate" << std::endl;
                         if (f_02.figure_rotate())
                         {
-                            main_field.set_figure(f_02, bl_01);
-                            break;
+                            if (main_field.set_figure(f_02, bl_01))
+                                break;
                         }
                     }
                 default:
                     break;
             }
         }
-        arr_block_vert                      = main_field.occupied_cells();
-        std::vector<vertex> back_block_vert = back_up_field.occupied_cells();
-        arr_block_vert.insert(begin(back_block_vert), end(back_block_vert),
-                              end(arr_block_vert));
+        main_field.set_figure(f_02, bl_01);
+        arr_block_vert     = main_field.occupied_cells();
         arr_block_vert_buf = engine->create_vertex_buffer(
             &arr_block_vert[0], arr_block_vert.size());
 
