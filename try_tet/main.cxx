@@ -107,7 +107,7 @@ int main()
 
     int    d_pos       = 0;
     float  start_timer = engine->get_time_from_init();
-    float  dt          = 0.8;
+    float  dt          = 0.2;
     size_t count       = 0;
     f_02.figure_change_position(164);
     bool   rotate        = false;
@@ -175,7 +175,6 @@ int main()
 
         if (timer >= dt)
         {
-            // main_field.clear_position(playing_figure);
             prev  = playing_figure;
             d_pos = -10;
             playing_figure.figure_change_position(d_pos);
@@ -185,18 +184,32 @@ int main()
                 main_field.clear_position(prev);
                 main_field.set_figure(playing_figure, bl_01);
             }
-
-            count++;
-            if (count > 1)
+            else
             {
-                count = 0;
-                figure f_03(fig_T);
-                playing_figure = f_03;
-                playing_figure.figure_change_position(164);
+                playing_figure = prev;
+                count++;
+                if (count > 1)
+                {
+                    count = 0;
+                    figure f_03(fig_T);
+                    playing_figure = f_03;
+                    playing_figure.figure_change_position(164);
+                }
             }
 
             start_timer = current_time;
         }
+        //        else
+        //        {
+        //            count++;
+        //            if (count > 1)
+        //            {
+        //                count = 0;
+        //                figure f_03(fig_T);
+        //                playing_figure = f_03;
+        //                playing_figure.figure_change_position(164);
+        //            }
+        //        }
 
         arr_block_vert     = main_field.occupied_cells();
         arr_block_vert_buf = engine->create_vertex_buffer(
