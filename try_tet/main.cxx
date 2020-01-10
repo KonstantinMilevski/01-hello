@@ -91,56 +91,43 @@ int main()
     rect bloc_text({ 0.f, 0.f }, { 1.f / 7, 1.f });
 
     block bl_01({ { 5.f, 5.f }, { cell_size, cell_size } }, bloc_text, nullptr);
-    block bl_02(bloc_pos, bloc_text, text_main_bar);
-    block bl_03(bloc_pos, bloc_text, text_main_bar);
+    //    block bl_02(bloc_pos, bloc_text, text_main_bar);
+    //    block bl_03(bloc_pos, bloc_text, text_main_bar);
 
-    std::vector<vertex> one_block_vert = bl_01.build_block();
+    //    std::vector<vertex> one_block_vert = bl_01.build_block();
 
     /// field srart
     field main_field(field_width, field_height);
-    field back_up_field(field_width, field_height);
 
-    figure f_01(fig_Z);
+    //    figure f_01(fig_Z);
     figure f_02(fig_S);
-    f_02.figure_change_position(164);
 
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
     vertex_buffer*      arr_block_vert_buf;
 
-    int    d_pos         = 1;
-    float  start_timer   = engine->get_time_from_init();
-    float  dt            = 0.2;
-    size_t count         = 0;
+    int    d_pos       = 0;
+    float  start_timer = engine->get_time_from_init();
+    float  dt          = 0.2;
+    size_t count       = 0;
+    f_02.figure_change_position(164);
+    bool   rotate        = false;
     bool   continue_loop = true;
+    bool   start_game    = true;
+    figure playing_figure;
+
     while (continue_loop)
     {
-        float curr_time = engine->get_time_from_init();
-        float timer     = curr_time - start_timer;
-        if (timer >= dt)
+        if (start_game)
         {
-            main_field.clear_position(f_02);
-            if (f_02.figure_move_down())
-            {
-                main_field.set_figure(f_02, bl_01);
-            }
-            else
-            {
-                main_field.set_figure(f_02, bl_01);
-                count++;
-                if (count > 1)
-                {
-                    count = 0;
-                    figure f_03(fig_T);
-                    f_02 = f_03;
-                    f_02.figure_change_position(164);
-                }
-            }
-            start_timer = curr_time;
+            playing_figure = f_02;
+
+            start_game = false;
         }
+        float current_time = engine->get_time_from_init();
+        float timer        = current_time - start_timer;
         event game_event;
         while (engine->read_event(game_event))
         {
-
             switch (game_event.key)
             {
                 case keys::exit:
@@ -150,52 +137,64 @@ int main()
                     if (engine->is_key_down(keys::right))
                     {
                         std::cout << "keys::right" << std::endl;
-                        main_field.clear_position(f_02);
-                        if (f_02.figure_horiszontal_move(d_pos))
-                        {
-                            if (main_field.set_figure(f_02, bl_01))
-                                break;
-                        }
-                        else
-                        {
-                            if (main_field.set_figure(f_02, bl_01))
-                                break;
-                        }
+                        d_pos += 1;
+                        break;
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        main_field.clear_position(f_02);
-                        if (f_02.figure_horiszontal_move(-d_pos))
-                        {
-                            if (main_field.set_figure(f_02, bl_01))
-                                break;
-                        }
-                        else
-                        {
-                            if (main_field.set_figure(f_02, bl_01))
-                                break;
-                        }
+                        std::cout << "keys::left" << std::endl;
+                        d_pos -= 1;
+                        break;
                     }
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
                     {
-                        main_field.clear_position(f_02);
                         std::cout << "keys::rotate" << std::endl;
-                        if (f_02.figure_rotate())
-                        {
-                            if (main_field.set_figure(f_02, bl_01))
-                                break;
-                        }
+                        rotate = true;
+                        break;
                     }
                 default:
                     break;
             }
         }
-        main_field.set_figure(f_02, bl_01);
+        figure prev = playing_figure;
+        main_field.clear_position(playing_figure);
+
+        playing_figure.figure_change_position(d_pos);
+        if (!(main_field.check_field_border(playing_figure) &&
+              main_field.check_empty_cell(playing_figure) &&
+              main_field.check_figure_horiszont(prev, playing_figure)))
+        {
+            playing_figure = prev;
+        }
+        if (rotate)
+            playing_figure.figure_rotate();
+
+        main_field.set_figure(playing_figure, bl_01);
+        if (timer >= dt)
+        {
+            // main_field.clear_position(playing_figure);
+            d_pos -= 10;
+            //            count++;
+            //            if (count > 1)
+            //            {
+            //                count = 0;
+            //                figure f_03(fig_T);
+            //                playing_figure = f_03;
+            //                playing_figure.figure_change_position(164);
+            //            }
+            //            main_field.clear_position(playing_figure);
+            //            playing_figure.figure_change_position(d_pos);
+            //            main_field.set_figure(prev, bl_01);
+            //            start_timer = current_time;
+        }
+
         arr_block_vert     = main_field.occupied_cells();
         arr_block_vert_buf = engine->create_vertex_buffer(
             &arr_block_vert[0], arr_block_vert.size());
+        rotate = false;
+        d_pos  = 0;
 
         //        vertex_buffer*      back_block_vert_buf =
         //        engine->create_vertex_buffer(
