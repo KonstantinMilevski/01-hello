@@ -119,9 +119,9 @@ int main()
         if (timer >= dt)
         {
             main_field.clear_position(f_02);
-            if (main_field.set_figure(f_02, bl_01))
+            if (f_02.figure_move_down())
             {
-                f_02.figure_move_down();
+                main_field.set_figure(f_02, bl_01);
             }
             else
             {
