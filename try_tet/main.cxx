@@ -19,7 +19,9 @@ int figures[7][4] = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-std::array<size_t, 4> fig_S{ 2, 4, 5, 7 };
+std::array<size_t, 4> fig_S{ 10, 20, 21, 31 };
+std::array<size_t, 4> fig_T{ 1, 10, 11, 12 };
+std::array<size_t, 4> fig_Z{ 3, 5, 4, 6 };
 /// each position is centr
 static const std::vector<vertex> figures_coord = {
     { 0.0, 1.5, 0.0, 0.0 },
@@ -99,35 +101,52 @@ int main()
 
     /// field srart
     field main_field(field_width, field_height);
-    main_field.set_block(bl_03, field_height * field_width - 1);
-    main_field.set_block(bl_02, 0);
-    figure f_01(fig_S);
-    main_field.set_figure(f_01, bl_01, 25);
+    field back_up_field(field_width, field_height);
+    main_field.set_block_on_field(bl_03, field_height * field_width - 1);
+    main_field.set_block_on_field(bl_02, 0);
+    figure f_01(fig_Z);
+    figure f_02(fig_S);
+    f_02.figure_change_position(164);
+
+    main_field.set_figure(f_02, bl_01);
+
+    main_field.set_figure(f_01, bl_01);
 
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
     vertex_buffer*      arr_block_vert_buf =
         engine->create_vertex_buffer(&arr_block_vert[0], arr_block_vert.size());
 
-    /// field ends
-
-    // vec2        current_pos(main_field.get_position(pos));
-    const float pi = 3.1415926f;
-    float       current_direction{ 0.f };
-    int         pos           = 0;
-    bool        continue_loop = true;
+    int    d_pos         = 1;
+    float  start_timer   = engine->get_time_from_init();
+    float  dt            = 0.5;
+    size_t count         = 0;
+    bool   continue_loop = true;
     while (continue_loop)
     {
-        //        float time = engine->get_time_from_init();
-        //        timer += time;
-        //        if (timer >= dt)
-        //        {
-        //            current_pos.y -= cell_size * 0.01;
-        //            timer = 0.f;
-        //            if (!check_border(current_pos))
-        //            {
-        //                current_pos.y += cell_size * 0.01;
-        //            }
-        //        }
+        float curr_time = engine->get_time_from_init();
+        float timer     = curr_time - start_timer;
+        if (timer >= dt)
+        {
+            main_field.clear_cells();
+            if (f_02.figure_move_down())
+            {
+                main_field.set_figure(f_02, bl_01);
+            }
+            else
+            {
+                main_field.set_figure(f_02, bl_01);
+                count++;
+                if (count > 1)
+                {
+                    count = 0;
+                    figure f_03(fig_T);
+                    f_02 = f_03;
+                    f_02.figure_change_position(164);
+                    back_up_field = main_field;
+                }
+            }
+            start_timer = curr_time;
+        }
         event game_event;
         while (engine->read_event(game_event))
         {
@@ -141,34 +160,59 @@ int main()
                     if (engine->is_key_down(keys::right))
                     {
                         std::cout << "keys::right" << std::endl;
-                        pos++;
                         main_field.clear_cells();
-                        if (main_field.set_figure(f_01, bl_01, pos))
+                        if (f_02.figure_horiszontal_move(d_pos))
+                        {
+                            main_field.set_figure(f_02, bl_01);
                             break;
+                        }
+                        else
+                        {
+                            main_field.set_figure(f_02, bl_01);
+                            break;
+                        }
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        pos--;
                         main_field.clear_cells();
-                        if (main_field.set_figure(f_01, bl_01, pos))
+                        if (f_02.figure_horiszontal_move(-d_pos))
+                        {
+                            main_field.set_figure(f_02, bl_01);
                             break;
-                        break;
+                        }
+                        else
+                        {
+                            main_field.set_figure(f_02, bl_01);
+                            break;
+                        }
                     }
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
                     {
+
+                        main_field.clear_cells();
                         std::cout << "keys::rotate" << std::endl;
-                        current_direction += pi * 0.5f;
-                        break;
+                        if (f_02.figure_rotate())
+                        {
+                            main_field.set_figure(f_02, bl_01);
+                            break;
+                        }
                     }
                 default:
                     break;
             }
         }
-        arr_block_vert     = main_field.occupied_cells();
+        arr_block_vert                      = main_field.occupied_cells();
+        std::vector<vertex> back_block_vert = back_up_field.occupied_cells();
+        arr_block_vert.insert(begin(back_block_vert), end(back_block_vert),
+                              end(arr_block_vert));
         arr_block_vert_buf = engine->create_vertex_buffer(
             &arr_block_vert[0], arr_block_vert.size());
+
+        //        vertex_buffer*      back_block_vert_buf =
+        //        engine->create_vertex_buffer(
+        //            &back_block_vert[0], back_block_vert.size());
 
         //        //  vec2   start_pos(main_field.get_position(4));
         //        //(0.0f, 1.0f - 0.5);
@@ -185,7 +229,7 @@ int main()
         //                           matrix::scale(window_scale, 1.0f) *
         //                               matrix::scale(0.01f, .01f));
         engine->render_tet(*arr_block_vert_buf, text_main_bar, m);
-
+        // engine->render_tet(*back_block_vert_buf, text_main_bar, m);
         engine->swap_buffer();
     }
 
