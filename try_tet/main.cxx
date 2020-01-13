@@ -19,9 +19,13 @@ int figures[7][4] = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
+std::array<size_t, 4> fig_I{ 1, 11, 21, 31 };
 std::array<size_t, 4> fig_S{ 10, 20, 21, 31 };
 std::array<size_t, 4> fig_T{ 1, 10, 11, 12 };
-std::array<size_t, 4> fig_Z{ 3, 5, 4, 6 };
+std::array<size_t, 4> fig_Z{ 20, 10, 11, 1 };
+std::array<size_t, 4> fig_L{ 20, 10, 0, 1 };
+std::array<size_t, 4> fig_J{ 31, 21, 0, 1 };
+
 /// each position is centr
 static const std::vector<vertex> figures_coord = {
     { 0.0, 1.5, 0.0, 0.0 },
@@ -100,14 +104,14 @@ int main()
     field main_field(field_width, field_height);
 
     //    figure f_01(fig_Z);
-    figure f_02(fig_S);
+    figure f_02(fig_I);
 
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
     vertex_buffer*      arr_block_vert_buf;
 
     int    d_pos       = 0;
     float  start_timer = engine->get_time_from_init();
-    float  dt          = 0.2;
+    float  dt          = 0.3;
     size_t count       = 0;
     f_02.figure_change_position(164);
     bool   rotate        = false;
@@ -154,6 +158,14 @@ int main()
                         rotate = true;
                         break;
                     }
+
+                case keys::down:
+                    if (engine->is_key_down(keys::down))
+                    {
+                        std::cout << "keys::down" << std::endl;
+                        dt = 0.01f;
+                        break;
+                    }
                 default:
                     break;
             }
@@ -164,12 +176,22 @@ int main()
         playing_figure.figure_change_position(d_pos);
         if (!(main_field.check_field_border(playing_figure) &&
               main_field.check_empty_cell(playing_figure) &&
-              main_field.check_figure_horiszont(prev, playing_figure)))
+              main_field.check_figure_horizont(prev, playing_figure)))
         {
             playing_figure = prev;
         }
+
         if (rotate)
+        {
+            prev = playing_figure;
+            main_field.clear_position(playing_figure);
             playing_figure.figure_rotate();
+            if (!(main_field.check_field_border(playing_figure) &&
+                  main_field.check_empty_cell(playing_figure)))
+            {
+                playing_figure = prev;
+            }
+        }
 
         main_field.set_figure(playing_figure, bl_01);
 
@@ -177,44 +199,36 @@ int main()
         {
             prev  = playing_figure;
             d_pos = -10;
+            main_field.clear_position(playing_figure);
             playing_figure.figure_change_position(d_pos);
             if (main_field.check_field_border(playing_figure) &&
                 main_field.check_empty_cell(playing_figure))
             {
-                main_field.clear_position(prev);
                 main_field.set_figure(playing_figure, bl_01);
             }
             else
             {
-                playing_figure = prev;
+
+                main_field.set_figure(prev, bl_01);
                 count++;
-                if (count > 1)
-                {
-                    count = 0;
-                    figure f_03(fig_T);
-                    playing_figure = f_03;
-                    playing_figure.figure_change_position(164);
-                }
+                //                if (count > 1)
+                //                {
+                count = 0;
+                figure f_03(fig_I);
+                playing_figure = f_03;
+                playing_figure.figure_change_position(164);
+                //                }
             }
 
             start_timer = current_time;
         }
-        //        else
-        //        {
-        //            count++;
-        //            if (count > 1)
-        //            {
-        //                count = 0;
-        //                figure f_03(fig_T);
-        //                playing_figure = f_03;
-        //                playing_figure.figure_change_position(164);
-        //            }
-        //        }
+        main_field.check_field();
 
         arr_block_vert     = main_field.occupied_cells();
         arr_block_vert_buf = engine->create_vertex_buffer(
             &arr_block_vert[0], arr_block_vert.size());
         rotate = false;
+        dt     = 0.3;
         d_pos  = 0;
 
         //        vertex_buffer*      back_block_vert_buf =

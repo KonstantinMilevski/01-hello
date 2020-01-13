@@ -56,11 +56,10 @@ struct figure
     std::array<vec2, 4> figure_XY_coord;
 
     figure(std::array<size_t, 4>& coord);
-    figure                operator=(std::array<size_t, 4>& coord);
-    void                  figure_change_position(const size_t& pos);
-    bool                  figure_horiszontal_move(const size_t& pos);
-    void                  figure_rotate();
-    bool                  figure_move_down();
+    figure operator=(std::array<size_t, 4>& coord);
+    void   figure_change_position(const size_t& pos);
+    void   figure_rotate();
+
     std::array<size_t, 4> coord_;
 };
 
@@ -69,18 +68,16 @@ struct field
     std::array<size_t, 4> cur_fig;
 
     field(size_t row, size_t col);
-    void set_block_on_field(block& bl, const size_t& pos);
-    bool set_figure(figure& fig, block& bl);
-
+    void                set_block_on_field(block& bl, const size_t& pos);
+    void                set_figure(figure& fig, block& bl);
     std::vector<vertex> occupied_cells();
     void                clear_position(const figure& fig);
-    bool                figure_in_field(block& bl, std::array<size_t, 4>& fig);
-    void                clear_all_field();
     vec2                return_cell_pos(size_t n);
-    size_t              return_vector_pos(const vec2& pos);
     bool                check_field_border(const figure& fig);
     bool                check_empty_cell(const figure& fig);
-    bool check_figure_horiszont(const figure& old, const figure& next);
+    bool check_figure_horizont(const figure& old, const figure& next);
+    bool check_full_line(size_t line);
+    void check_field();
 
     size_t            col_;
     size_t            row_;

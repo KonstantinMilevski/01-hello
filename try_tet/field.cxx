@@ -82,20 +82,20 @@ void field::set_block_on_field(block& bl, const size_t& pos)
     field_.at(pos).is_empty            = false;
 }
 
-bool field::set_figure(figure& figur, block& bl)
+void field::set_figure(figure& figur, block& bl)
 {
-    if (field_.at(figur.coord_.at(0)).is_empty == true &&
-        field_.at(figur.coord_.at(1)).is_empty == true &&
-        field_.at(figur.coord_.at(2)).is_empty == true &&
-        field_.at(figur.coord_.at(3)).is_empty == true)
+    //    if (field_.at(figur.coord_.at(0)).is_empty == true &&
+    //        field_.at(figur.coord_.at(1)).is_empty == true &&
+    //        field_.at(figur.coord_.at(2)).is_empty == true &&
+    //        field_.at(figur.coord_.at(3)).is_empty == true)
+    //    {
+    for (size_t i = 0; i < 4; i++)
     {
-        for (size_t i = 0; i < 4; i++)
-        {
-            this->set_block_on_field(bl, figur.coord_.at(i));
-        }
-        return true;
+        this->set_block_on_field(bl, figur.coord_.at(i));
     }
-    return false;
+    //    return true;
+    //    }
+    // return false;
 }
 
 std::vector<vertex> field::occupied_cells()
@@ -121,38 +121,9 @@ void field::clear_position(const figure& fig)
     }
 }
 
-bool field::figure_in_field(block& bl, std::array<size_t, 4>& fig)
-{
-    if (fig.at(0) >= 0 && fig.at(0) < row_ * col_ && fig.at(1) >= 0 &&
-        fig.at(1) < row_ * col_ && fig.at(2) >= 0 && fig.at(2) < row_ * col_ &&
-        fig.at(3) >= 0 && fig.at(3) < row_ * col_)
-    {
-        for (auto f : fig)
-        {
-            this->set_block_on_field(bl, f);
-        }
-        return true;
-    }
-    return false;
-}
-
-void field::clear_all_field()
-{
-    for (auto& cells : field_)
-    {
-        cells.is_empty = true;
-    }
-}
-
 vec2 field::return_cell_pos(size_t n)
 {
     return field_.at(n).cell_.xy_rect_.pos;
-}
-
-size_t field::return_vector_pos(const vec2& pos)
-{
-
-    return pos.y * row_ + pos.x;
 }
 
 bool field::check_field_border(const figure& fig)
@@ -169,12 +140,12 @@ bool field::check_empty_cell(const figure& fig)
 {
     for (auto i = 0; i < 4; i++)
     {
-        if (field_.at(fig.coord_.at(0)).is_empty == false)
+        if (field_.at(fig.coord_.at(i)).is_empty == false)
             return false;
     }
     return true;
 }
-bool field::check_figure_horiszont(const figure& old, const figure& next)
+bool field::check_figure_horizont(const figure& old, const figure& next)
 {
     for (auto i = 0; i < 4; i++)
     {
@@ -182,6 +153,47 @@ bool field::check_figure_horiszont(const figure& old, const figure& next)
             return false;
     }
     return true;
+}
+
+bool field::check_full_line(size_t line)
+{
+    size_t count{ 0 };
+    for (line; line < col_; line++)
+    {
+        if (!field_[line].is_empty)
+        {
+            count++;
+        }
+    }
+    if (col_ == count)
+        return true;
+    else
+        return false;
+}
+
+void field::check_field()
+{
+    //    size_t k = 0;
+    //    for (auto i = 0; i <= row_; i += col_)
+    //    {
+    //        size_t count = 0;
+    //        for (auto j = i; j <= i * col_; j++)
+    //        {
+
+    //            count++;
+    //            field_.at(k)=
+    //        }
+    auto it = begin(field_);
+    for (auto i = 0; i < col_ * row_; i += col_)
+    {
+        if (check_full_line(i))
+        {
+            //            std::for_each((begin(field_) + i), (begin(field_) + i
+            //            + col_),
+            //                          [](cell& c) { c.is_empty = true; });
+            field_.insert((it + i), (it + i + col_), std::end(field_));
+        }
+    }
 }
 
 figure::figure(std::array<size_t, 4>& coord)
@@ -206,34 +218,6 @@ void figure::figure_change_position(const size_t& pos)
     }
 }
 
-bool figure::figure_horiszontal_move(const size_t& pos)
-{
-    // return size 10-column, 200-col*row
-
-    std::array<size_t, 4> old_figure = coord_;
-
-    if (coord_.at(0) + pos >= 0 && coord_.at(0) + pos < 200 &&
-        coord_.at(1) + pos >= 0 && coord_.at(1) + pos < 200 &&
-        coord_.at(2) + pos >= 0 && coord_.at(2) + pos < 200 &&
-        coord_.at(3) + pos >= 0 && coord_.at(3) + pos < 200 &&
-        old_figure.at(0) / 10 == (coord_.at(0) + pos) / 10 &&
-        old_figure.at(1) / 10 == (coord_.at(1) + pos) / 10 &&
-        old_figure.at(2) / 10 == (coord_.at(2) + pos) / 10 &&
-        old_figure.at(3) / 10 == (coord_.at(3) + pos) / 10)
-    {
-        for (auto& block : coord_)
-        {
-            block += pos;
-        }
-        return true;
-    }
-    else
-    {
-        coord_ = old_figure;
-        return false;
-    }
-}
-
 void figure::figure_rotate()
 {
     std::array<vec2, 4> coord_XY;
@@ -246,52 +230,36 @@ void figure::figure_rotate()
     }
     vec2 centr = coord_XY.at(1);
     vec2 new_pos;
-    bool move_left  = false;
-    bool move_right = false;
+    int  move_left  = 0;
+    int  move_right = 0;
+    int  compare    = 0;
     for (auto i = 0; i < 4; i++)
     {
         new_pos.x = centr.x - (coord_XY.at(i).y - centr.y);
         new_pos.y = centr.y + (coord_XY.at(i).x - centr.x);
         if (new_pos.x < 0)
-            move_right = true;
+        {
+            compare = new_pos.x + 0;
+            if (move_right > compare)
+                move_right = compare;
+        }
         if (new_pos.x > 9)
-            move_left = true;
+        {
+            compare = new_pos.x - 9;
+            if (move_left < compare)
+                move_left = compare;
+        }
+
         coord_.at(i) = new_pos.x + new_pos.y * 10;
     }
     if (move_right)
     {
-        for (auto i = 0; i < 4; i++)
-        {
-            coord_.at(i)++;
-        }
+        std::for_each(begin(coord_), end(coord_),
+                      [&](size_t& i) { i -= move_right; });
     }
     if (move_left)
         for (auto i = 0; i < 4; i++)
         {
-            coord_.at(i)--;
+            coord_.at(i) += move_left;
         }
-}
-
-bool figure::figure_move_down()
-{
-    int                   pos        = -10;
-    std::array<size_t, 4> old_figure = coord_;
-
-    if (coord_.at(0) + pos >= 0 && coord_.at(0) + pos < 200 &&
-        coord_.at(1) + pos >= 0 && coord_.at(1) + pos < 200 &&
-        coord_.at(2) + pos >= 0 && coord_.at(2) + pos < 200 &&
-        coord_.at(3) + pos >= 0 && coord_.at(3) + pos < 200)
-    {
-
-        for (auto& block : coord_)
-        {
-            block += pos;
-        }
-        return true;
-    }
-    else
-    {
-        coord_ = old_figure;
-        return false;
-    }
 }
