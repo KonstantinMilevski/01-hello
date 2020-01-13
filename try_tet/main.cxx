@@ -101,8 +101,8 @@ int main()
     //    std::vector<vertex> one_block_vert = bl_01.build_block();
 
     /// field srart
-    field main_field(field_width, field_height);
-
+    // field main_field(field_width, field_height);
+    field main_field(10, 20);
     //    figure f_01(fig_Z);
     figure f_02(fig_I);
 
@@ -208,21 +208,17 @@ int main()
             }
             else
             {
-
                 main_field.set_figure(prev, bl_01);
-                count++;
-                //                if (count > 1)
-                //                {
-                count = 0;
                 figure f_03(fig_I);
                 playing_figure = f_03;
                 playing_figure.figure_change_position(164);
-                //                }
+
+                main_field.check_field();
+                main_field.set_figure(playing_figure, bl_01);
             }
 
             start_timer = current_time;
         }
-        main_field.check_field();
 
         arr_block_vert     = main_field.occupied_cells();
         arr_block_vert_buf = engine->create_vertex_buffer(

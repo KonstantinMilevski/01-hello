@@ -48,7 +48,7 @@ struct block
 struct cell
 {
     block cell_;
-    bool  is_empty;
+    bool  is_empty = true;
 };
 struct figure
 {
@@ -67,16 +67,18 @@ struct field
 {
     std::array<size_t, 4> cur_fig;
 
-    field(size_t row, size_t col);
+    field(size_t col, size_t row);
+    void                refill_field();
     void                set_block_on_field(block& bl, const size_t& pos);
     void                set_figure(figure& fig, block& bl);
     std::vector<vertex> occupied_cells();
     void                clear_position(const figure& fig);
+    void                clear_field();
     vec2                return_cell_pos(size_t n);
     bool                check_field_border(const figure& fig);
     bool                check_empty_cell(const figure& fig);
     bool check_figure_horizont(const figure& old, const figure& next);
-    bool check_full_line(size_t line);
+    bool check_full_line(std::vector<cell>::iterator line);
     void check_field();
 
     size_t            col_;

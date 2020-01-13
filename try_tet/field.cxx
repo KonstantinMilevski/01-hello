@@ -53,7 +53,7 @@ void block::set_position(vec2 new_pos)
     uv_rect_.pos = new_pos;
 }
 ///////////////////////////////
-field::field(size_t row, size_t col)
+field::field(size_t col, size_t row)
     : col_(col)
     , row_(row)
 {
@@ -61,9 +61,8 @@ field::field(size_t row, size_t col)
         field_.resize(col * row);
         for (auto i = 0; i < col * row; i++)
         {
-            field_.at(i).is_empty = true;
-            float x               = i % row_ * cell_size + 0.5 * cell_size;
-            float y               = i / row_ * cell_size + 0.5 * cell_size;
+            float x = i % col * cell_size + 0.5 * cell_size;
+            float y = i / col * cell_size + 0.5 * cell_size;
             rect  rect_xy({ x, y }, { cell_size, cell_size });
             rect  rect_uv({ x, y }, { cell_size, cell_size });
             field_.at(i).cell_.xy_rect_ = rect_xy;
@@ -84,18 +83,10 @@ void field::set_block_on_field(block& bl, const size_t& pos)
 
 void field::set_figure(figure& figur, block& bl)
 {
-    //    if (field_.at(figur.coord_.at(0)).is_empty == true &&
-    //        field_.at(figur.coord_.at(1)).is_empty == true &&
-    //        field_.at(figur.coord_.at(2)).is_empty == true &&
-    //        field_.at(figur.coord_.at(3)).is_empty == true)
-    //    {
     for (size_t i = 0; i < 4; i++)
     {
         this->set_block_on_field(bl, figur.coord_.at(i));
     }
-    //    return true;
-    //    }
-    // return false;
 }
 
 std::vector<vertex> field::occupied_cells()
@@ -118,6 +109,14 @@ void field::clear_position(const figure& fig)
     for (auto cell : fig.coord_)
     {
         field_.at(cell).is_empty = true;
+    }
+}
+
+void field::clear_field()
+{
+    for (auto var : field_)
+    {
+        var.is_empty = true;
     }
 }
 
@@ -155,12 +154,15 @@ bool field::check_figure_horizont(const figure& old, const figure& next)
     return true;
 }
 
-bool field::check_full_line(size_t line)
+bool field::check_full_line(std::vector<cell>::iterator line)
 {
-    size_t count{ 0 };
-    for (line; line < col_; line++)
+    size_t                      count{ 0 };
+    std::vector<cell>::iterator beg = line;
+    std::vector<cell>::iterator end = line + col_;
+    for (beg; beg != end; beg++)
     {
-        if (!field_[line].is_empty)
+
+        if (!beg->is_empty)
         {
             count++;
         }
@@ -173,26 +175,39 @@ bool field::check_full_line(size_t line)
 
 void field::check_field()
 {
-    //    size_t k = 0;
-    //    for (auto i = 0; i <= row_; i += col_)
-    //    {
-    //        size_t count = 0;
-    //        for (auto j = i; j <= i * col_; j++)
-    //        {
-
-    //            count++;
-    //            field_.at(k)=
-    //        }
+    std::vector<cell> temp;
+    temp.reserve(row_ * col_);
     auto it = begin(field_);
-    for (auto i = 0; i < col_ * row_; i += col_)
+    for (it; it != end(field_); it += col_)
     {
-        if (check_full_line(i))
+        if (!check_full_line(it))
         {
-            //            std::for_each((begin(field_) + i), (begin(field_) + i
-            //            + col_),
-            //                          [](cell& c) { c.is_empty = true; });
-            field_.insert((it + i), (it + i + col_), std::end(field_));
+            temp.insert(end(temp), it, it + col_);
         }
+    }
+    if (!temp.empty())
+    {
+        temp.resize(row_ * col_);
+        this->clear_field();
+        this->refill_field();
+        for (int i = 0; i < row_ * col_; i++)
+        {
+            field_.at(i).is_empty            = temp.at(i).is_empty;
+            field_.at(i).cell_.uv_rect_.size = temp.at(i).cell_.uv_rect_.size;
+        }
+    }
+}
+
+void field::refill_field()
+{
+    for (auto i = 0; i < col_ * row_; i++)
+    {
+        float x = i % col_ * cell_size + 0.5 * cell_size;
+        float y = i / col_ * cell_size + 0.5 * cell_size;
+        rect  rect_xy({ x, y }, { cell_size, cell_size });
+        rect  rect_uv({ x, y }, { cell_size, cell_size });
+        field_.at(i).cell_.xy_rect_ = rect_xy;
+        field_.at(i).cell_.uv_rect_ = rect_uv;
     }
 }
 
@@ -260,6 +275,6 @@ void figure::figure_rotate()
     if (move_left)
         for (auto i = 0; i < 4; i++)
         {
-            coord_.at(i) += move_left;
+            coord_.at(i) -= move_left;
         }
 }
