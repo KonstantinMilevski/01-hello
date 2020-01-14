@@ -94,15 +94,11 @@ int main()
     rect bloc_pos({ 0.f, 0.f }, { cell_size, cell_size });
     rect bloc_text({ 0.f, 0.f }, { 1.f / 7, 1.f });
 
-    block bl_01({ { 5.f, 5.f }, { cell_size, cell_size } }, bloc_text, nullptr);
-    //    block bl_02(bloc_pos, bloc_text, text_main_bar);
-    //    block bl_03(bloc_pos, bloc_text, text_main_bar);
-
-    //    std::vector<vertex> one_block_vert = bl_01.build_block();
+    block bl_01(bloc_pos, bloc_text);
 
     /// field srart
-    // field main_field(field_width, field_height);
-    field main_field(10, 20);
+
+    field main_field(10, 25);
     //    figure f_01(fig_Z);
     figure f_02(fig_I);
 
@@ -113,7 +109,7 @@ int main()
     float  start_timer = engine->get_time_from_init();
     float  dt          = 0.3;
     size_t count       = 0;
-    f_02.figure_change_position(164);
+    f_02.figure_change_position(205);
     bool   rotate        = false;
     bool   continue_loop = true;
     bool   start_game    = true;
@@ -211,7 +207,7 @@ int main()
                 main_field.set_figure(prev, bl_01);
                 figure f_03(fig_I);
                 playing_figure = f_03;
-                playing_figure.figure_change_position(164);
+                playing_figure.figure_change_position(205);
 
                 main_field.check_field();
                 main_field.set_figure(playing_figure, bl_01);

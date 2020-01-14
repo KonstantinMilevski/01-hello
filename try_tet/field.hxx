@@ -30,19 +30,17 @@ struct rect
 struct block
 {
     block() = default;
-    block(rect pos, rect uv_pos, texture* tex)
+    block(rect pos, rect uv_pos)
         : xy_rect_(pos)
         , uv_rect_(uv_pos)
-        , tex_(tex)
     {
     }
 
     std::vector<vertex> build_block();
     void                set_position(vec2 new_pos);
 
-    rect     xy_rect_;       /// centr of cell
-    rect     uv_rect_;       /// position of texture
-    texture* tex_ = nullptr; /// texture for cell
+    rect xy_rect_; /// centr of cell
+    rect uv_rect_; /// position of texture
 };
 
 struct cell
