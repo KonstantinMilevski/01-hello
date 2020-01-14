@@ -1,4 +1,4 @@
-#include "field.hxx"
+﻿#include "field.hxx"
 
 #include <algorithm>
 #include <array>
@@ -148,7 +148,7 @@ bool field::check_figure_horizont(const figure& old, const figure& next)
 {
     for (auto i = 0; i < 4; i++)
     {
-        if (old.coord_.at(i) / 10 != next.coord_.at(i) / 10)
+        if (old.coord_.at(i) / col_ != next.coord_.at(i) / col_)
             return false;
     }
     return true;
@@ -211,16 +211,15 @@ void field::refill_field()
     }
 }
 
-figure::figure(std::array<size_t, 4>& coord)
+figure::figure(std::array<size_t, 4>& coord, size_t f_width)
 
-    : coord_{ coord }
 {
+    size_t x{ 0 }, y{ 0 };
     for (size_t i = 0; i < 4; i++)
     {
-        figure_XY_coord.at(i).x =
-            coord_.at(i) % 10; //* cell_size + 0.5 * cell_size;
-        figure_XY_coord.at(i).y =
-            coord_.at(i) / 10; // * cell_size + 0.5 * cell_size;
+        x            = coord.at(i) % 2;
+        y            = coord.at(i) / 2;
+        coord_.at(i) = x + y * f_width;
     }
 }
 
@@ -233,13 +232,13 @@ void figure::figure_change_position(const size_t& pos)
     }
 }
 
-void figure::figure_rotate()
+void figure::figure_rotate(size_t f_width)
 {
     std::array<vec2, 4> coord_XY;
     for (auto i = 0; i < 4; i++)
     {
-        float x          = coord_.at(i) % 10;
-        float y          = coord_.at(i) / 10;
+        float x          = coord_.at(i) % f_width;
+        float y          = coord_.at(i) / f_width;
         coord_XY.at(i).x = x;
         coord_XY.at(i).y = y;
     }
@@ -258,14 +257,14 @@ void figure::figure_rotate()
             if (move_right > compare)
                 move_right = compare;
         }
-        if (new_pos.x > 9)
+        if (new_pos.x > f_width - 1)
         {
-            compare = new_pos.x - 9;
+            compare = new_pos.x - (f_width - 1);
             if (move_left < compare)
                 move_left = compare;
         }
 
-        coord_.at(i) = new_pos.x + new_pos.y * 10;
+        coord_.at(i) = new_pos.x + new_pos.y * f_width;
     }
     if (move_right)
     {

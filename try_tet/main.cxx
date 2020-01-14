@@ -19,12 +19,14 @@ int figures[7][4] = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-std::array<size_t, 4> fig_I{ 1, 11, 21, 31 };
+// std::array<size_t, 4> fig_I{ 1, 11, 21, 31 };
 std::array<size_t, 4> fig_S{ 10, 20, 21, 31 };
 std::array<size_t, 4> fig_T{ 1, 10, 11, 12 };
 std::array<size_t, 4> fig_Z{ 20, 10, 11, 1 };
 std::array<size_t, 4> fig_L{ 20, 10, 0, 1 };
 std::array<size_t, 4> fig_J{ 31, 21, 0, 1 };
+///
+std::array<size_t, 4> fig_I{ 1, 3, 5, 7 };
 
 /// each position is centr
 static const std::vector<vertex> figures_coord = {
@@ -97,10 +99,11 @@ int main()
     block bl_01(bloc_pos, bloc_text);
 
     /// field srart
-
-    field main_field(10, 25);
+    size_t width_main_field  = 6;
+    size_t height_main_field = 25;
+    field  main_field(width_main_field, height_main_field);
     //    figure f_01(fig_Z);
-    figure f_02(fig_I);
+    figure f_02(fig_I, width_main_field);
 
     std::vector<vertex> arr_block_vert = main_field.occupied_cells();
     vertex_buffer*      arr_block_vert_buf;
@@ -109,7 +112,8 @@ int main()
     float  start_timer = engine->get_time_from_init();
     float  dt          = 0.3;
     size_t count       = 0;
-    f_02.figure_change_position(205);
+    f_02.figure_change_position((height_main_field - 4) * width_main_field +
+                                width_main_field / 2);
     bool   rotate        = false;
     bool   continue_loop = true;
     bool   start_game    = true;
@@ -181,7 +185,7 @@ int main()
         {
             prev = playing_figure;
             main_field.clear_position(playing_figure);
-            playing_figure.figure_rotate();
+            playing_figure.figure_rotate(width_main_field);
             if (!(main_field.check_field_border(playing_figure) &&
                   main_field.check_empty_cell(playing_figure)))
             {
@@ -194,7 +198,7 @@ int main()
         if (timer >= dt)
         {
             prev  = playing_figure;
-            d_pos = -10;
+            d_pos = -width_main_field;
             main_field.clear_position(playing_figure);
             playing_figure.figure_change_position(d_pos);
             if (main_field.check_field_border(playing_figure) &&
@@ -205,9 +209,11 @@ int main()
             else
             {
                 main_field.set_figure(prev, bl_01);
-                figure f_03(fig_I);
+                figure f_03(fig_I, width_main_field);
                 playing_figure = f_03;
-                playing_figure.figure_change_position(205);
+                playing_figure.figure_change_position((height_main_field - 4) *
+                                                          width_main_field +
+                                                      width_main_field / 2);
 
                 main_field.check_field();
                 main_field.set_figure(playing_figure, bl_01);
