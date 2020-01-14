@@ -32,6 +32,8 @@ std::vector<vertex> block::build_block()
     quad[3].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5;
 
     /// vec2.uv, OpenGL texture lower left angle is (0, 0) coordinate
+    //    float side_x=uv_rect_.size.x-uv_rect_.pos.x;
+    //    float side_y=uv_rect_.size.y-uv_rect_.pos.y;
     quad[3].uv.x = uv_rect_.pos.x;
     quad[3].uv.y = uv_rect_.pos.y;
     quad[0].uv.x = quad[3].uv.x;
@@ -41,6 +43,15 @@ std::vector<vertex> block::build_block()
 
     quad[2].uv.x = quad[3].uv.x + uv_rect_.size.x;
     quad[2].uv.y = quad[3].uv.y;
+    //    quad[3].uv.x = uv_rect_.pos.x;
+    //    quad[3].uv.y = uv_rect_.pos.y;
+    //    quad[0].uv.x = quad[3].uv.x;
+    //    quad[0].uv.y = quad[3].uv.y + uv_rect_.size.y;
+    //    quad[1].uv.x = quad[3].uv.x + uv_rect_.size.x;
+    //    quad[1].uv.y = quad[3].uv.y + uv_rect_.size.y;
+
+    //    quad[2].uv.x = quad[3].uv.x + uv_rect_.size.x;
+    //    quad[2].uv.y = quad[3].uv.y;
 
     std::vector<vertex> quad_tri = { quad[1], quad[2], quad[3],
                                      quad[0], quad[1], quad[3] };
@@ -50,7 +61,13 @@ std::vector<vertex> block::build_block()
 void block::set_position(vec2 new_pos)
 {
     xy_rect_.pos = new_pos;
-    uv_rect_.pos = new_pos;
+    // uv_rect_.pos = new_pos;
+}
+
+void block::set_texture_pos(const rect& new_pos)
+{
+    uv_rect_.size = new_pos.size;
+    uv_rect_.pos  = new_pos.pos;
 }
 ///////////////////////////////
 field::field(size_t col, size_t row)
@@ -78,6 +95,7 @@ void field::set_block_on_field(block& bl, const size_t& pos)
     vec2 cell_pos = this->return_cell_pos(pos);
     bl.set_position(cell_pos);
     field_.at(pos).cell_.uv_rect_.size = bl.uv_rect_.size;
+    field_.at(pos).cell_.uv_rect_.pos  = bl.uv_rect_.pos;
     field_.at(pos).is_empty            = false;
 }
 
@@ -189,7 +207,7 @@ void field::check_field()
     {
         temp.resize(row_ * col_);
         this->clear_field();
-        this->refill_field();
+        // this->refill_field();
         for (int i = 0; i < row_ * col_; i++)
         {
             field_.at(i).is_empty            = temp.at(i).is_empty;
@@ -205,9 +223,9 @@ void field::refill_field()
         float x = i % col_ * cell_size + 0.5 * cell_size;
         float y = i / col_ * cell_size + 0.5 * cell_size;
         rect  rect_xy({ x, y }, { cell_size, cell_size });
-        rect  rect_uv({ x, y }, { cell_size, cell_size });
+        // rect  rect_uv({ x, y }, { cell_size, cell_size });
         field_.at(i).cell_.xy_rect_ = rect_xy;
-        field_.at(i).cell_.uv_rect_ = rect_uv;
+        // field_.at(i).cell_.uv_rect_ = rect_uv;
     }
 }
 

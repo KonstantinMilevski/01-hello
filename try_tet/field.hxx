@@ -38,6 +38,7 @@ struct block
 
     std::vector<vertex> build_block();
     void                set_position(vec2 new_pos);
+    void                set_texture_pos(const rect& new_pos);
 
     rect xy_rect_; /// centr of cell
     rect uv_rect_; /// position of texture
@@ -51,12 +52,10 @@ struct cell
 struct figure
 {
     figure() = default;
-    // std::array<size_t, 4> figure_field_coord;
-
     figure(std::array<size_t, 4>& coord, size_t f_width);
-    figure operator=(std::array<size_t, 4>& coord);
-    void   figure_change_position(const size_t& pos);
-    void   figure_rotate(size_t f_width);
+
+    void figure_change_position(const size_t& pos);
+    void figure_rotate(size_t f_width);
 
     std::array<size_t, 4> coord_;
 };

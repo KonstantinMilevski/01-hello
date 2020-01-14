@@ -5,12 +5,13 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <memory>
 
-int figures[7][4] = {
+std::array<std::array<size_t, 4>, 7> figures = {
     1, 3, 5, 7, // I
     2, 4, 5, 7, // S
     3, 5, 4, 6, // Z
@@ -19,52 +20,40 @@ int figures[7][4] = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-// std::array<size_t, 4> fig_I{ 1, 11, 21, 31 };
-std::array<size_t, 4> fig_S{ 10, 20, 21, 31 };
-std::array<size_t, 4> fig_T{ 1, 10, 11, 12 };
-std::array<size_t, 4> fig_Z{ 20, 10, 11, 1 };
-std::array<size_t, 4> fig_L{ 20, 10, 0, 1 };
-std::array<size_t, 4> fig_J{ 31, 21, 0, 1 };
-///
-std::array<size_t, 4> fig_I{ 1, 3, 5, 7 };
+/// left down coord texture
+std::array<vec2, 7> second_texture_pos = { {
+    { 0.f, 0.f },
+    { 1.f / 7, 0.f },
+    { 2.f / 7, 0.f },
+    { 3.f / 7, 0.f },
+    { 4.f / 7, 0.f },
+    { 5.f / 7, 0.f },
+    { 6.f / 7, 0.f },
+} };
 
-/// each position is centr
-static const std::vector<vertex> figures_coord = {
-    { 0.0, 1.5, 0.0, 0.0 },
-    { 0.0, 0.5, 0.0, 0.0 },
-    { 0.0, -0.5, 0.0, 0.0 },
-    { 0.0, -1.5, 0.0, 0.0 }, // I
-    //
-    { 0.5, 1.0, 0.0, 0.0 },
-    { 0.5, 0.0, 0.0, 0.0 },
-    { -0.5, 0.0, 0.0, 0.0 },
-    { -0.5, -1.0, 0.0, 0.0 }, // Z
+std::array<size_t, 4> select_figure(std::array<std::array<size_t, 4>, 7>& fig)
+{
 
-    { 0.5, -1.5, 0.0, 0.0 },
-    { 0.5, -0.5, 0.0, 0.0 },
-    { -0.5, -0.5, 0.0, 0.0 },
-    { -0.5, 0.5, 0.0, 0.0 }, // S ??
+    std::array<size_t, 4> res;
+    srand(time(0));
+    const size_t rand_index = static_cast<size_t>(rand());
+    const size_t row        = rand_index % 7;
+    for (size_t i = 0; i < 4; i++)
+    {
+        res.at(i) = fig[row][i];
+    }
+    return res;
+}
+rect generate_texture_position(std::array<vec2, 7>& text_pos)
+{
 
-    { -0.5, -1.0, 0.0, 0.0 },
-    { -0.5, 0.0, 0.0, 0.0 },
-    { -0.5, 1.0, 0.0, 0.0 },
-    { 0.5, 0.0, 0.0, 0.0 }, // T
-
-    { -0.5, 1.0, 0.0, 0.0 },
-    { -0.5, 0.0, 0.0, 0.0 },
-    { -0.5, -1.0, 0.0, 0.0 },
-    { 0.5, -1.0, 0.0, 0.0 }, // L
-
-    { 0.5, 1.0, 0.0, 0.0 },
-    { 0.5, 0.0, 0.0, 0.0 },
-    { 0.5, -1.0, 0.0, 0.0 },
-    { -0.5, -1.0, 0.0, 0.0 }, // J
-
-    { -0.5, 0.5, 0.0, 0.0 },
-    { -0.5, -0.5, 0.0, 0.0 },
-    { 0.5, 0.5, 0.0, 0.0 },
-    { 0.5, -0.5, 0.0, 0.0 } // O
-};
+    const size_t rand_index    = static_cast<size_t>(rand());
+    const size_t number        = rand_index % 7;
+    vec2         next_text_pos = text_pos.at(number);
+    /// texture size
+    vec2 next_text_size = { 1.f / 7, 1.f };
+    return { next_text_pos, next_text_size };
+}
 
 int main()
 {
@@ -93,37 +82,38 @@ int main()
         return EXIT_FAILURE;
     }
     /// block start
-    rect bloc_pos({ 0.f, 0.f }, { cell_size, cell_size });
-    rect bloc_text({ 0.f, 0.f }, { 1.f / 7, 1.f });
-
-    block bl_01(bloc_pos, bloc_text);
+    rect  block_pos({ 0.f, 0.f }, { cell_size, cell_size });
+    rect  block_text({ 1.f / 7, 0.f }, { 1.f / 7, 1.f });
+    block main_block(block_pos, block_text);
 
     /// field srart
-    size_t width_main_field  = 6;
+    size_t width_main_field  = 20;
     size_t height_main_field = 25;
     field  main_field(width_main_field, height_main_field);
-    //    figure f_01(fig_Z);
-    figure f_02(fig_I, width_main_field);
+    /// select first figure
+    std::array<size_t, 4> start_coord = select_figure(figures);
+    figure                start_figure(start_coord, width_main_field);
 
-    std::vector<vertex> arr_block_vert = main_field.occupied_cells();
+    std::vector<vertex> arr_block_vert;
     vertex_buffer*      arr_block_vert_buf;
 
-    int    d_pos       = 0;
-    float  start_timer = engine->get_time_from_init();
-    float  dt          = 0.3;
-    size_t count       = 0;
-    f_02.figure_change_position((height_main_field - 4) * width_main_field +
-                                width_main_field / 2);
-    bool   rotate        = false;
-    bool   continue_loop = true;
-    bool   start_game    = true;
+    int   d_pos       = 0;
+    float start_timer = engine->get_time_from_init();
+    float dt          = 0.3;
+    /// first figure start position '-4' row from top, center
+    start_figure.figure_change_position(
+        (height_main_field - 4) * width_main_field + width_main_field / 2);
+    bool rotate        = false;
+    bool continue_loop = true;
+    bool start_game    = true;
+    /// figure for main loop
     figure playing_figure;
 
     while (continue_loop)
     {
         if (start_game)
         {
-            playing_figure = f_02;
+            playing_figure = start_figure;
 
             start_game = false;
         }
@@ -193,7 +183,7 @@ int main()
             }
         }
 
-        main_field.set_figure(playing_figure, bl_01);
+        main_field.set_figure(playing_figure, main_block);
 
         if (timer >= dt)
         {
@@ -204,19 +194,23 @@ int main()
             if (main_field.check_field_border(playing_figure) &&
                 main_field.check_empty_cell(playing_figure))
             {
-                main_field.set_figure(playing_figure, bl_01);
+                main_field.set_figure(playing_figure, main_block);
             }
             else
             {
-                main_field.set_figure(prev, bl_01);
-                figure f_03(fig_I, width_main_field);
-                playing_figure = f_03;
+                main_field.set_figure(prev, main_block);
+                std::array<size_t, 4> next_coord = select_figure(figures);
+                figure                next_figure(next_coord, width_main_field);
+                rect                  next_texture =
+                    generate_texture_position(second_texture_pos);
+                main_block.set_texture_pos(next_texture);
+                playing_figure = next_figure;
                 playing_figure.figure_change_position((height_main_field - 4) *
                                                           width_main_field +
                                                       width_main_field / 2);
 
                 main_field.check_field();
-                main_field.set_figure(playing_figure, bl_01);
+                main_field.set_figure(playing_figure, main_block);
             }
 
             start_timer = current_time;
@@ -229,12 +223,6 @@ int main()
         dt     = 0.3;
         d_pos  = 0;
 
-        //        vertex_buffer*      back_block_vert_buf =
-        //        engine->create_vertex_buffer(
-        //            &back_block_vert[0], back_block_vert.size());
-
-        //        //  vec2   start_pos(main_field.get_position(4));
-        //        //(0.0f, 1.0f - 0.5);
         vec2 zero_pos(cell_size * field_width * (-0.5),
                       cell_size * field_height * (-0.5));
         // vec2   zero_pos(-1.f, -1.f);
@@ -244,9 +232,7 @@ int main()
             matrix::scale(window_scale * 0.009f, 1.0f * 0.009f);
         // matrix rot           = matrix::rotation(current_direction);
         matrix m = zero * screen_aspect;
-        //        engine->render_tet(*one_block_vert_buf, text_main_bar,
-        //                           matrix::scale(window_scale, 1.0f) *
-        //                               matrix::scale(0.01f, .01f));
+
         engine->render_tet(*arr_block_vert_buf, text_main_bar, m);
         // engine->render_tet(*back_block_vert_buf, text_main_bar, m);
         engine->swap_buffer();
