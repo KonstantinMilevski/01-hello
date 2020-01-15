@@ -193,12 +193,7 @@ public:
     virtual bool        is_key_down(const enum keys key) = 0;
     virtual void        render_tet(const vertex_buffer& buff, texture* tex,
                                    const matrix& m)      = 0;
-    // virtual bool check_input(const SDL_Event& e, const bind*& result) = 0;
-
-    //    virtual vertex_buffer* create_vertex_buffer(const tri2* tri,
-    //                                                std::size_t n) = 0;
-
-    virtual float get_time_from_init() = 0;
+    virtual float       get_time_from_init()             = 0;
 
     virtual vertex_buffer* create_vertex_buffer(const vertex*, std::size_t) = 0;
     virtual void           destroy_vertex_buffer(vertex_buffer*)            = 0;

@@ -58,7 +58,7 @@ std::vector<vertex> block::build_block()
     return quad_tri;
 }
 
-void block::set_position(vec2 new_pos)
+void block::set_position(const vec2& new_pos)
 {
     xy_rect_.pos = new_pos;
     // uv_rect_.pos = new_pos;
@@ -70,7 +70,7 @@ void block::set_texture_pos(const rect& new_pos)
     uv_rect_.pos  = new_pos.pos;
 }
 ///////////////////////////////
-field::field(size_t col, size_t row)
+field::field(const size_t col, const size_t row)
     : col_(col)
     , row_(row)
 {
@@ -99,7 +99,7 @@ void field::set_block_on_field(block& bl, const size_t& pos)
     field_.at(pos).is_empty            = false;
 }
 
-void field::set_figure(figure& figur, block& bl)
+void field::set_figure(const figure& figur, block& bl)
 {
     for (size_t i = 0; i < 4; i++)
     {
@@ -138,7 +138,7 @@ void field::clear_field()
     }
 }
 
-vec2 field::return_cell_pos(size_t n)
+vec2 field::return_cell_pos(const size_t& n)
 {
     return field_.at(n).cell_.xy_rect_.pos;
 }
@@ -250,7 +250,7 @@ void figure::figure_change_position(const size_t& pos)
     }
 }
 
-void figure::figure_rotate(size_t f_width)
+void figure::figure_rotate(const size_t& f_width)
 {
     std::array<vec2, 4> coord_XY;
     for (auto i = 0; i < 4; i++)

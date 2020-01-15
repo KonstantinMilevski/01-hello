@@ -44,7 +44,7 @@ std::array<size_t, 4> select_figure(std::array<std::array<size_t, 4>, 7>& fig)
     }
     return res;
 }
-rect generate_texture_position(std::array<vec2, 7>& text_pos)
+rect generate_texture_color(std::array<vec2, 7>& text_pos)
 {
 
     const size_t rand_index    = static_cast<size_t>(rand());
@@ -87,15 +87,24 @@ int main()
     block main_block(block_pos, block_text);
 
     /// field srart
-    size_t width_main_field  = 20;
-    size_t height_main_field = 25;
+    size_t width_main_field  = 10;
+    size_t height_main_field = 20;
     field  main_field(width_main_field, height_main_field);
+    /// field_next_figure
+    size_t width_next_field  = 2;
+    size_t height_next_field = 4;
+    field  next_field(width_next_field, height_next_field);
+
     /// select first figure
     std::array<size_t, 4> start_coord = select_figure(figures);
     figure                start_figure(start_coord, width_main_field);
+    figure                next_start_figure(start_coord, width_next_field); //
+    next_field.set_figure(next_start_figure, main_block);                   //
 
-    std::vector<vertex> arr_block_vert;
-    vertex_buffer*      arr_block_vert_buf;
+    std::vector<vertex> main_field_vert;
+    vertex_buffer*      main_field_vert_buf;
+    std::vector<vertex> next_field_vert;
+    vertex_buffer*      next_field_vert_buf;
 
     int   d_pos       = 0;
     float start_timer = engine->get_time_from_init();
@@ -130,21 +139,21 @@ int main()
                 case keys::right:
                     if (engine->is_key_down(keys::right))
                     {
-                        std::cout << "keys::right" << std::endl;
+                        // std::cout << "keys::right" << std::endl;
                         d_pos += 1;
                         break;
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        std::cout << "keys::left" << std::endl;
+                        // std::cout << "keys::left" << std::endl;
                         d_pos -= 1;
                         break;
                     }
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
                     {
-                        std::cout << "keys::rotate" << std::endl;
+                        // std::cout << "keys::rotate" << std::endl;
                         rotate = true;
                         break;
                     }
@@ -152,7 +161,7 @@ int main()
                 case keys::down:
                     if (engine->is_key_down(keys::down))
                     {
-                        std::cout << "keys::down" << std::endl;
+                        // std::cout << "keys::down" << std::endl;
                         dt = 0.01f;
                         break;
                     }
@@ -196,13 +205,16 @@ int main()
             {
                 main_field.set_figure(playing_figure, main_block);
             }
+
             else
             {
                 main_field.set_figure(prev, main_block);
                 std::array<size_t, 4> next_coord = select_figure(figures);
                 figure                next_figure(next_coord, width_main_field);
-                rect                  next_texture =
-                    generate_texture_position(second_texture_pos);
+
+                figure next_figure_view(next_coord, width_next_field); //
+
+                rect next_texture = generate_texture_color(second_texture_pos);
                 main_block.set_texture_pos(next_texture);
                 playing_figure = next_figure;
                 playing_figure.figure_change_position((height_main_field - 4) *
@@ -211,33 +223,48 @@ int main()
 
                 main_field.check_field();
                 main_field.set_figure(playing_figure, main_block);
+
+                next_field.clear_field();                            //
+                next_field.set_figure(next_figure_view, main_block); //
             }
 
             start_timer = current_time;
         }
 
-        arr_block_vert     = main_field.occupied_cells();
-        arr_block_vert_buf = engine->create_vertex_buffer(
-            &arr_block_vert[0], arr_block_vert.size());
+        //
+        next_field_vert     = next_field.occupied_cells();
+        next_field_vert_buf = engine->create_vertex_buffer(
+            &next_field_vert[0], next_field_vert.size());
+        //
+        main_field_vert     = main_field.occupied_cells();
+        main_field_vert_buf = engine->create_vertex_buffer(
+            &main_field_vert[0], main_field_vert.size());
         rotate = false;
         dt     = 0.3;
         d_pos  = 0;
 
-        vec2 zero_pos(cell_size * field_width * (-0.5),
+        vec2   zero_pos(cell_size * field_width * (-0.5),
                       cell_size * field_height * (-0.5));
-        // vec2   zero_pos(-1.f, -1.f);
         matrix zero = matrix::move(zero_pos);
-        // matrix move          = matrix::move(current_pos);
         matrix screen_aspect =
             matrix::scale(window_scale * 0.009f, 1.0f * 0.009f);
-        // matrix rot           = matrix::rotation(current_direction);
         matrix m = zero * screen_aspect;
-
-        engine->render_tet(*arr_block_vert_buf, text_main_bar, m);
-        // engine->render_tet(*back_block_vert_buf, text_main_bar, m);
+        //
+        // vec2   next_f_zero_pos(cell_size * 2 * (-0.5), cell_size * 4 *
+        // (-0.5));
+        vec2   next_f_zero_pos(80, 100);
+        matrix next_f_zero = matrix::move(next_f_zero_pos);
+        matrix next_f_screen_aspect =
+            matrix::scale(window_scale * 0.006f, 1.0f * 0.006f);
+        matrix next_f_m = next_f_zero * next_f_screen_aspect;
+        engine->render_tet(*next_field_vert_buf, text_main_bar, next_f_m);
+        //
+        engine->render_tet(*main_field_vert_buf, text_main_bar, m);
         engine->swap_buffer();
+        engine->destroy_vertex_buffer(main_field_vert_buf);
+        engine->destroy_vertex_buffer(next_field_vert_buf);
     }
-
+    engine->destroy_texture(text_main_bar);
     engine->uninitialize();
     return 0;
 }

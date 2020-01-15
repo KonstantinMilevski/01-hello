@@ -622,13 +622,6 @@ public:
 
     void destroy_texture(texture* t) final { delete t; }
 
-    /// create_vertex_buffer
-    //    vertex_buffer* create_vertex_buffer(const tri2* triangles,
-    //    std::size_t n)
-    //    {
-    //        assert(triangles != nullptr);
-    //        return new vertex_buffer_impl(triangles, n);
-    //    }
     vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t count)
     {
         assert(vert != nullptr);

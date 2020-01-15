@@ -37,11 +37,11 @@ struct block
     }
 
     std::vector<vertex> build_block();
-    void                set_position(vec2 new_pos);
+    void                set_position(const vec2& new_pos);
     void                set_texture_pos(const rect& new_pos);
 
     rect xy_rect_; /// centr of cell
-    rect uv_rect_; /// position of texture
+    rect uv_rect_; /// position of texture, 1-point 0-left, down; 2-size
 };
 
 struct cell
@@ -55,7 +55,7 @@ struct figure
     figure(std::array<size_t, 4>& coord, size_t f_width);
 
     void figure_change_position(const size_t& pos);
-    void figure_rotate(size_t f_width);
+    void figure_rotate(const size_t& f_width);
 
     std::array<size_t, 4> coord_;
 };
@@ -64,19 +64,21 @@ struct field
 {
     std::array<size_t, 4> cur_fig;
 
-    field(size_t col, size_t row);
+    field(const size_t col, const size_t row);
     void                refill_field();
     void                set_block_on_field(block& bl, const size_t& pos);
-    void                set_figure(figure& fig, block& bl);
+    void                set_figure(const figure& fig, block& bl);
     std::vector<vertex> occupied_cells();
     void                clear_position(const figure& fig);
     void                clear_field();
-    vec2                return_cell_pos(size_t n);
+    vec2                return_cell_pos(const size_t& n);
     bool                check_field_border(const figure& fig);
     bool                check_empty_cell(const figure& fig);
     bool check_figure_horizont(const figure& old, const figure& next);
     bool check_full_line(std::vector<cell>::iterator line);
     void check_field();
+
+    void set_texture();
 
     size_t            col_;
     size_t            row_;
