@@ -11,47 +11,13 @@
 #include <sstream>
 #include <vector>
 
-//#define U(x) (x)
-//#define V(x) (1.0f - (x))
-
-// static const GLfloat globBoxVertexData[] = {
-//    //   X     Y     Z       U        V
-//    // front
-//    1.0f,    1.0f,    1.0f, U(1.0f), V(1.0f), -1.0f,   1.0f,    1.0f,
-//    U(0.0f), V(1.0f), 1.0f, -1.0f,   1.0f,    U(1.0f), V(0.0f),
-
-//    // ....
-
-//};
-
 /// check opengl function
 
 unsigned long text_width  = 0;
 unsigned long text_height = 0;
 
 /// kod for SDL_events
-// static std::array<std::string_view, 17> event_names = {
-//    /// input events
-//    { "left_pressed", "left_released", "right_pressed", "right_released",
-//      "up_pressed", "up_released", "down_pressed", "down_released",
-//      /// virtual console events
-//      "turn_off" }
-//};
-// std::ostream& operator<<(std::ostream& stream, const event e)
-//{
-//    std::uint32_t value   = static_cast<std::uint32_t>(e);
-//    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-//    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
-//    if (value >= minimal && value <= maximal)
-//    {
-//        stream << event_names[value];
-//        return stream;
-//    }
-//    else
-//    {
-//        throw std::runtime_error("too big event value");
-//    }
-//}
+
 struct bind
 {
     bind() {}
@@ -72,7 +38,7 @@ const std::array<bind, 6> keys_list{
     bind{ SDLK_DOWN, "down", keys::down },
     bind{ SDLK_RIGHT, "right", keys::right },
     bind{ SDLK_UP, "rotate", keys::rotate },
-    bind{ SDLK_SPACE, "pause", keys::pause },
+    bind{ SDLK_p, "pause", keys::pause },
     bind{ SDLK_ESCAPE, "exit", keys::exit },
 }
 

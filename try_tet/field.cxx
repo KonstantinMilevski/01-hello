@@ -221,59 +221,7 @@ rect field::field_rect()
         field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5 * cell_size,
         field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5 * cell_size);
     return { left_down, { width, height } };
-    //    vec2 left_down(field_.at(0).cell_.uv_rect_.pos.x - 0.5 * cell_size,
-    //                   field_.at(0).cell_.uv_rect_.pos.y - 0.5 * cell_size);
-    //    vec2 right_up(
-    //        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5 * cell_size,
-    //        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5 *
-    //        cell_size);
-    //    return { left_down, right_up };
 }
-
-// std::vector<vertex> field::field_vertexes()
-//{
-//    std::array<vertex, 4> quad;
-//    // you can change colore of texture with shift uv coord
-//    ///   0            1
-//    ///   *------------*
-//    ///   |           /|
-//    ///   |         /  |
-//    ///   |      P/    |  // P - pos_ center - OpenGL (0,0)
-//    ///   |     /      |  // vertex 3 - texture (0,0)
-//    ///   |   /        |
-//    ///   | /          |
-//    ///   *------------*
-//    ///   3            2
-//    ///
-//    /// 0 left-up, clockwise
-//    /// vec2.pos
-//    quad[3].pos.x = field_.at(0).cell_.uv_rect_.pos.x - 0.5 * cell_size;
-//    quad[3].pos.y = field_.at(0).cell_.uv_rect_.pos.y - 0.5 * cell_size;
-//    quad[1].pos.x =
-//        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5 * cell_size;
-//    quad[1].pos.y =
-//        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5 * cell_size;
-//    quad[0].pos.x = quad[3].pos.x;
-//    quad[0].pos.y = quad[1].pos.y;
-
-//    quad[2].pos.x = quad[1].pos.x;
-//    quad[2].pos.y = quad[3].pos.y;
-
-//    /// vec2.uv, OpenGL texture lower left angle is (0, 0) coordinate
-//    //    float side_x=uv_rect_.size.x-uv_rect_.pos.x;
-//    //    float side_y=uv_rect_.size.y-uv_rect_.pos.y;
-//    quad[3].uv.x = field_.at(0).cell_.uv_rect_.pos.x - 0.5 * cell_size;
-//    quad[3].uv.y = field_.at(0).cell_.uv_rect_.pos.y - 0.5 * cell_size;
-//    quad[1].uv.x =
-//        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5 * cell_size;
-//    quad[1].uv.y =
-//        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5 * cell_size;
-//    quad[0].uv.x = quad[3].pos.x;
-//    quad[0].uv.y = quad[1].pos.y;
-
-//    quad[2].uv.x = quad[1].pos.x;
-//    quad[2].uv.y = quad[3].pos.y;
-//}
 
 figure::figure()
 {
@@ -339,11 +287,18 @@ void figure::figure_rotate(const size_t& f_width)
     if (move_right)
     {
         std::for_each(begin(coord_), end(coord_),
-                      [&](size_t& i) { i -= move_right; });
+                      [&move_right](size_t& i) { i -= move_right; });
     }
     if (move_left)
         for (auto i = 0; i < 4; i++)
         {
             coord_.at(i) -= move_left;
         }
+}
+
+bool figure::compare_position(const figure& fig)
+{
+    auto result = std::find_first_of(begin(coord_), end(coord_),
+                                     begin(fig.coord_), end(fig.coord_));
+    return result == end(coord_) ? false : true;
 }

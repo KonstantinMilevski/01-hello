@@ -56,6 +56,7 @@ struct figure
 
     void figure_change_position(const size_t& pos);
     void figure_rotate(const size_t& f_width);
+    bool compare_position(const figure& fig);
 
     std::array<size_t, 4> coord_;
 };
@@ -85,32 +86,3 @@ struct field
     size_t            row_;
     std::vector<cell> field_;
 };
-
-// float gl_height = 2.f;
-
-// float gl_width      = cell_size * field_width; // 2.f;
-// int   n             = 4;
-// float left_border   = -gl_width * 0.5; // + cell_size * 0.5;
-// float right_border  = gl_width * 0.5;  // - cell_size * 0.5;
-// float bottom_border = gl_height * 0.5;
-// float dt            = 1.f;
-// float timer         = 0.f;
-
-// tri2 transform_pixel_coord_to_GL(size_t tex_w, size_t tex_h, tri2& t)
-//{
-//    tri2 n;
-//    n.v[0].pos.x = t.v[0].pos.x * 2 / width - 1.0f;
-//    n.v[0].pos.y = t.v[0].pos.y * 2 / heigh - 1.0f;
-//    n.v[1].pos.x = t.v[1].pos.x * 2 / width - 1.0f;
-//    n.v[1].pos.y = t.v[1].pos.y * 2 / heigh - 1.0f;
-//    n.v[2].pos.x = t.v[2].pos.x * 2 / width - 1.0f;
-//    n.v[2].pos.y = t.v[2].pos.y * 2 / heigh - 1.0f;
-
-//    n.v[0].uv.x = t.v[0].uv.x * 2 / width - 1.0f;
-//    n.v[0].uv.y = t.v[0].uv.y * 2 / heigh - 1.0f;
-//    n.v[1].uv.x = t.v[1].uv.x * 2 / width - 1.0f;
-//    n.v[1].uv.y = t.v[1].uv.y * 2 / heigh - 1.0f;
-//    n.v[2].uv.x = t.v[2].uv.x * 2 / width - 1.0f;
-//    n.v[2].uv.y = t.v[2].uv.y * 2 / heigh - 1.0f;
-//    return n;
-//}

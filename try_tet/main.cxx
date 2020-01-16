@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <memory>
 
 std::array<std::array<size_t, 4>, 7> figures = {
@@ -116,7 +117,7 @@ int main()
 
     int   d_pos       = 0;
     float start_timer = engine->get_time_from_init();
-    float dt          = 0.3f;
+    float dt          = 0.25f;
     /// first figure start position '-4' row from top, center
     start_figure.figure_change_position(
         (height_main_field - 4) * width_main_field + width_main_field / 2);
@@ -124,6 +125,7 @@ int main()
     static bool continue_loop = true;
     static bool start_game    = true;
     static bool next          = true;
+    static bool pause         = false;
     static rect next_texture; /// next texrure pos for random generation
 
     figure playing_figure; /// figure for main loop
@@ -146,38 +148,45 @@ int main()
                 case keys::exit:
                     continue_loop = false;
                     break;
+
                 case keys::right:
                     if (engine->is_key_down(keys::right))
                     {
-                        // std::cout << "keys::right" << std::endl;
                         d_pos += 1;
                         break;
                     }
                 case keys::left:
                     if (engine->is_key_down(keys::left))
                     {
-                        // std::cout << "keys::left" << std::endl;
                         d_pos -= 1;
                         break;
                     }
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
                     {
-                        // std::cout << "keys::rotate" << std::endl;
                         rotate = true;
                         break;
                     }
-
                 case keys::down:
                     if (engine->is_key_down(keys::down))
                     {
-                        // std::cout << "keys::down" << std::endl;
                         dt = 0.01f;
                         break;
                     }
+                case keys::pause:
+                    if (engine->is_key_down(keys::pause))
+                    {
+                        pause == false ? pause = true : pause = false;
+                        break;
+                    }
+
                 default:
                     break;
             }
+        }
+        if (pause)
+        {
+            continue;
         }
         figure prev = playing_figure;
         main_field.clear_position(playing_figure);
@@ -215,20 +224,19 @@ int main()
             next = false;
         }
 
-        if (timer >= dt)
+        if (timer > dt)
         {
             prev  = playing_figure;
             d_pos = -width_main_field;
             main_field.clear_position(playing_figure);
             playing_figure.figure_change_position(d_pos);
-            //
+
             if (!next)
             {
                 next_field.clear_field();
             }
-            next_figure_view = { next_coord, width_next_field }; //
-            next_field.set_figure(next_figure_view, next_block); //
-            //
+            next_figure_view = { next_coord, width_next_field };
+            next_field.set_figure(next_figure_view, next_block);
 
             if (main_field.check_field_border(playing_figure) &&
                 main_field.check_empty_cell(playing_figure))
@@ -245,6 +253,11 @@ int main()
                                                           width_main_field +
                                                       width_main_field / 2);
                 main_field.check_field();
+                if (prev.compare_position(playing_figure))
+                {
+                    std::cerr << "Game OVer";
+                    break;
+                }
                 main_field.set_figure(playing_figure, main_block);
                 next = true;
             }
@@ -261,7 +274,7 @@ int main()
         main_field_vert_buf = engine->create_vertex_buffer(
             &main_field_vert[0], main_field_vert.size());
         rotate = false;
-        dt     = 0.3;
+        dt     = 0.4;
         d_pos  = 0;
 
         /// back
@@ -292,7 +305,6 @@ int main()
         engine->swap_buffer();
         engine->destroy_vertex_buffer(main_field_vert_buf);
         engine->destroy_vertex_buffer(next_field_vert_buf);
-        // engine->destroy_vertex_buffer(back_vert_buf);
     }
     engine->destroy_vertex_buffer(back_vert_buf);
     engine->destroy_texture(text_main_bar);
