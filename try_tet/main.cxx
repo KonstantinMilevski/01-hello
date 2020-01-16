@@ -20,7 +20,7 @@ std::array<std::array<size_t, 4>, 7> figures = {
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
 };
-/// left down coord texture
+/// left down texture origin point
 std::array<vec2, 7> second_texture_pos = { {
     { 0.f, 0.f },
     { 1.f / 7, 0.f },
@@ -75,8 +75,8 @@ int main()
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
     }
-    texture* back_up_texture = engine->create_texture("frame.png");
-    if (nullptr == back_up_texture)
+    texture* b_g_texture = engine->create_texture("Back.png");
+    if (nullptr == b_g_texture)
     {
         std::cerr << "failed load texture\n";
         return EXIT_FAILURE;
@@ -85,6 +85,7 @@ int main()
     rect  block_pos({ 0.f, 0.f }, { cell_size, cell_size });
     rect  block_text({ 1.f / 7, 0.f }, { 1.f / 7, 1.f });
     block main_block(block_pos, block_text);
+    block next_block(block_pos, block_text);
 
     /// field srart
     size_t width_main_field  = 10;
@@ -100,7 +101,14 @@ int main()
     figure                start_figure(start_coord, width_main_field);
     figure                next_start_figure(start_coord, width_next_field); //
     next_field.set_figure(next_start_figure, main_block);                   //
+    /// block background;
+    rect                bg_block = { main_field.field_rect() };
+    block               background(bg_block, { { 0.f, 0.f }, { 1.f, 1.f } });
+    std::vector<vertex> back_vert = background.build_block();
+    vertex_buffer*      back_vert_buf =
+        engine->create_vertex_buffer(&back_vert[0], 6);
 
+    ///
     std::vector<vertex> main_field_vert;
     vertex_buffer*      main_field_vert_buf;
     std::vector<vertex> next_field_vert;
@@ -108,15 +116,17 @@ int main()
 
     int   d_pos       = 0;
     float start_timer = engine->get_time_from_init();
-    float dt          = 0.3;
+    float dt          = 0.3f;
     /// first figure start position '-4' row from top, center
     start_figure.figure_change_position(
         (height_main_field - 4) * width_main_field + width_main_field / 2);
-    bool rotate        = false;
-    bool continue_loop = true;
-    bool start_game    = true;
-    /// figure for main loop
-    figure playing_figure;
+    static bool rotate        = false;
+    static bool continue_loop = true;
+    static bool start_game    = true;
+    static bool next          = true;
+    static rect next_texture; /// next texrure pos for random generation
+
+    figure playing_figure; /// figure for main loop
 
     while (continue_loop)
     {
@@ -193,6 +203,17 @@ int main()
         }
 
         main_field.set_figure(playing_figure, main_block);
+        figure                next_figure;
+        figure                next_figure_view;
+        std::array<size_t, 4> next_coord;
+
+        if (next)
+        {
+            next_texture = generate_texture_color(second_texture_pos);
+            next_coord   = select_figure(figures);
+            next_block.set_texture_pos(next_texture);
+            next = false;
+        }
 
         if (timer >= dt)
         {
@@ -200,32 +221,32 @@ int main()
             d_pos = -width_main_field;
             main_field.clear_position(playing_figure);
             playing_figure.figure_change_position(d_pos);
+            //
+            if (!next)
+            {
+                next_field.clear_field();
+            }
+            next_figure_view = { next_coord, width_next_field }; //
+            next_field.set_figure(next_figure_view, next_block); //
+            //
+
             if (main_field.check_field_border(playing_figure) &&
                 main_field.check_empty_cell(playing_figure))
             {
                 main_field.set_figure(playing_figure, main_block);
             }
-
             else
             {
                 main_field.set_figure(prev, main_block);
-                std::array<size_t, 4> next_coord = select_figure(figures);
-                figure                next_figure(next_coord, width_main_field);
-
-                figure next_figure_view(next_coord, width_next_field); //
-
-                rect next_texture = generate_texture_color(second_texture_pos);
+                next_figure = { next_coord, width_main_field };
                 main_block.set_texture_pos(next_texture);
                 playing_figure = next_figure;
                 playing_figure.figure_change_position((height_main_field - 4) *
                                                           width_main_field +
                                                       width_main_field / 2);
-
                 main_field.check_field();
                 main_field.set_figure(playing_figure, main_block);
-
-                next_field.clear_field();                            //
-                next_field.set_figure(next_figure_view, main_block); //
+                next = true;
             }
 
             start_timer = current_time;
@@ -243,28 +264,39 @@ int main()
         dt     = 0.3;
         d_pos  = 0;
 
+        /// back
+        vec2   bg_zero_pos(-45, -96);
+        matrix bg_zero          = matrix::move(bg_zero_pos);
+        matrix bg_screen_aspect = matrix::scale(window_scale, 1.0f);
+        matrix bg_size_scale    = matrix::scale(0.0128f, 0.0103f);
+        matrix bg_m             = bg_zero * bg_screen_aspect * bg_size_scale;
+        engine->render_tet(*back_vert_buf, b_g_texture, bg_m);
+
+        /// main field
         vec2   zero_pos(cell_size * field_width * (-0.5),
                       cell_size * field_height * (-0.5));
-        matrix zero = matrix::move(zero_pos);
-        matrix screen_aspect =
-            matrix::scale(window_scale * 0.009f, 1.0f * 0.009f);
-        matrix m = zero * screen_aspect;
-        //
-        // vec2   next_f_zero_pos(cell_size * 2 * (-0.5), cell_size * 4 *
-        // (-0.5));
-        vec2   next_f_zero_pos(80, 100);
+        matrix zero          = matrix::move(zero_pos);
+        matrix screen_aspect = matrix::scale(window_scale, 1.0f);
+        matrix size_scale    = matrix::scale(0.009f, 0.009f);
+        matrix m             = zero * screen_aspect * size_scale;
+        engine->render_tet(*main_field_vert_buf, text_main_bar, m);
+        /// next field
+        vec2   next_f_zero_pos(110, 100);
         matrix next_f_zero = matrix::move(next_f_zero_pos);
         matrix next_f_screen_aspect =
             matrix::scale(window_scale * 0.006f, 1.0f * 0.006f);
         matrix next_f_m = next_f_zero * next_f_screen_aspect;
         engine->render_tet(*next_field_vert_buf, text_main_bar, next_f_m);
-        //
-        engine->render_tet(*main_field_vert_buf, text_main_bar, m);
+
+        ///
         engine->swap_buffer();
         engine->destroy_vertex_buffer(main_field_vert_buf);
         engine->destroy_vertex_buffer(next_field_vert_buf);
+        // engine->destroy_vertex_buffer(back_vert_buf);
     }
+    engine->destroy_vertex_buffer(back_vert_buf);
     engine->destroy_texture(text_main_bar);
+    engine->destroy_texture(b_g_texture);
     engine->uninitialize();
     return 0;
 }

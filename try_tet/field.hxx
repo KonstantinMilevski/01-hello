@@ -51,7 +51,7 @@ struct cell
 };
 struct figure
 {
-    figure() = default;
+    figure();
     figure(std::array<size_t, 4>& coord, size_t f_width);
 
     void figure_change_position(const size_t& pos);
@@ -65,7 +65,7 @@ struct field
     std::array<size_t, 4> cur_fig;
 
     field(const size_t col, const size_t row);
-    void                refill_field();
+
     void                set_block_on_field(block& bl, const size_t& pos);
     void                set_figure(const figure& fig, block& bl);
     std::vector<vertex> occupied_cells();
@@ -77,6 +77,7 @@ struct field
     bool check_figure_horizont(const figure& old, const figure& next);
     bool check_full_line(std::vector<cell>::iterator line);
     void check_field();
+    rect field_rect();
 
     void set_texture();
 
