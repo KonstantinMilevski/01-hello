@@ -63,19 +63,18 @@ void shader_gl_es20::set_uniform(std::string_view uniform_name, const matrix& m)
     GL_CHECK()
 }
 
-// void shader_gl_es20::set_uniform(std::string_view uniform_name, const color&
-// c)
-//{
-//    const int location = glGetUniformLocation(program_id,
-//    uniform_name.data()); GL_CHECK() if (location == -1)
-//    {
-//        std::cerr << "can't get uniform location from shader\n";
-//        throw std::runtime_error("can't get uniform location");
-//    }
-//    float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
-//    glUniform4fv(location, 1, &values[0]);
-//    GL_CHECK()
-//}
+void shader_gl_es20::set_uniform(std::string_view uniform_name, const color& c)
+{
+    const int location = glGetUniformLocation(program_id, uniform_name.data());
+    GL_CHECK() if (location == -1)
+    {
+        std::cerr << "can't get uniform location from shader\n";
+        throw std::runtime_error("can't get uniform location");
+    }
+    float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
+    glUniform4fv(location, 1, &values[0]);
+    GL_CHECK()
+}
 
 GLuint shader_gl_es20::get_program_id() const
 {

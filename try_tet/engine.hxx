@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 
+#include "color.hxx"
 #include "glad/glad.h"
 #include <SDL2/SDL.h>
 
@@ -108,8 +109,9 @@ struct vertex
         , uv(tx_, ty_)
     {
     }
-    vec2 pos;
-    vec2 uv;
+    vec2  pos;
+    vec2  uv;
+    color c;
 };
 
 struct triangle
@@ -174,8 +176,7 @@ class vertex_buffer
 public:
     virtual ~vertex_buffer();
     virtual const vertex* data() const = 0;
-    /// count of vertexes
-    virtual size_t size() const = 0;
+    virtual size_t        size() const = 0;
 };
 
 class engine;

@@ -12,6 +12,8 @@ add_library(engine SHARED engine.cxx
                                vertex_buffer_impl.hxx
                                shader_gl_es20.cxx
                                shader_gl_es20.hxx
+                               color.cxx
+                               color.hxx
                                stb_image.h
                                                               )
 

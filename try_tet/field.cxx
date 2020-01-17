@@ -110,6 +110,10 @@ std::vector<vertex> field::occupied_cells()
                                 end(temp_vertexes));
         }
     }
+    for (auto var : occupied_pos)
+    {
+        var.c = { 1.0, 1.0, 1.0, 1.0 };
+    }
     return occupied_pos;
 }
 

@@ -83,10 +83,10 @@ int main()
         return EXIT_FAILURE;
     }
     /// block start
-    rect  block_pos({ 0.f, 0.f }, { cell_size, cell_size });
-    rect  block_text({ 1.f / 7, 0.f }, { 1.f / 7, 1.f });
-    block main_block(block_pos, block_text);
-    block next_block(block_pos, block_text);
+    const rect block_pos({ 0.f, 0.f }, { cell_size, cell_size });
+    const rect block_text({ 1.f / 7, 0.f }, { 1.f / 7, 1.f });
+    block      main_block(block_pos, block_text);
+    block      next_block(block_pos, block_text);
 
     /// field srart
     size_t width_main_field  = 10;
@@ -121,12 +121,12 @@ int main()
     /// first figure start position '-4' row from top, center
     start_figure.figure_change_position(
         (height_main_field - 4) * width_main_field + width_main_field / 2);
-    static bool rotate        = false;
-    static bool continue_loop = true;
-    static bool start_game    = true;
-    static bool next          = true;
-    static bool pause         = false;
-    static rect next_texture; /// next texrure pos for random generation
+    bool rotate        = false;
+    bool continue_loop = true;
+    bool start_game    = true;
+    bool next          = true;
+    bool pause         = false;
+    rect next_texture; /// next texrure pos for random generation
 
     figure playing_figure; /// figure for main loop
 

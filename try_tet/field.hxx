@@ -39,9 +39,10 @@ struct block
     std::vector<vertex> build_block();
     void                set_position(const vec2& new_pos);
     void                set_texture_pos(const rect& new_pos);
-
-    rect xy_rect_; /// centr of cell
-    rect uv_rect_; /// position of texture, 1-point 0-left, down; 2-size
+    /// centr of cell
+    rect xy_rect_;
+    /// position of texture, first-point 0-left, down; second-size
+    rect uv_rect_;
 };
 
 struct cell

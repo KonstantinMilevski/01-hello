@@ -15,9 +15,7 @@ public:
     void set_uniform(std::string_view uniform_name, texture_gl_es20* texture);
     void set_uniform(std::string_view uniform_name, const matrix& m);
 
-    // void set_uniform(std::string_view uniform_name, const color& c); // mayby
-    // no
-
+    void   set_uniform(std::string_view uniform_name, const color& c);
     GLuint get_program_id() const;
 
 private:

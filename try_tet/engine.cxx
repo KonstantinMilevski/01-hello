@@ -79,6 +79,7 @@ std::istream& operator>>(std::istream& is, vertex& v)
     is >> v.pos.y;
     is >> v.uv.x;
     is >> v.uv.y;
+    // is >> v.c;
     return is;
 }
 std::istream& operator>>(std::istream& is, triangle& t)
@@ -479,8 +480,8 @@ public:
         //        GL_CHECK()
 
         assert(gl_default_vbo != 0);
-        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
-        GL_CHECK()
+        //        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+        //        GL_CHECK()
 
         const vertex* t = buff.data();
         uint32_t      data_size_in_bytes =
@@ -525,8 +526,8 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(buff.size()));
         GL_CHECK()
 
-        //        glDisableVertexAttribArray(1);
-        //        GL_CHECK()
+        glDisableVertexAttribArray(1);
+        GL_CHECK()
         glDisableVertexAttribArray(2);
         GL_CHECK()
     }
@@ -537,7 +538,7 @@ public:
         GL_CHECK()
         glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
         GL_CHECK()
-        glClear(GL_COLOR_BUFFER_BIT /*| GL_DEPTH_BUFFER_BIT*/);
+        glClear(GL_COLOR_BUFFER_BIT);
         GL_CHECK()
     }
     bool read_event(event& e) override final
