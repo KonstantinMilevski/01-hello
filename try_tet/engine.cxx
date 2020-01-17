@@ -310,17 +310,6 @@ public:
         {
             std::cerr << "error: failed to initialize glad" << std::endl;
         }
-        /// glGenBuffers
-        glGenBuffers(1, &gl_default_vbo);
-        GL_CHECK()
-        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
-        GL_CHECK()
-        uint32_t data_size_in_bytes = 0;
-        glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, nullptr,
-                     GL_STATIC_DRAW);
-        GL_CHECK()
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, nullptr);
-        GL_CHECK()
 
         shader00 = new shader_gl_es20(
             R"(
@@ -384,7 +373,7 @@ public:
                     )",
             { { 0, "a_position" },
               /*{ 1, "a_color" }, */ { 2, "a_tex_coord" } });
-        shader01->use();
+
         glEnable(GL_BLEND);
         GL_CHECK()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -475,38 +464,15 @@ public:
         shader01->set_uniform("s_texture", texture);
         shader01->set_uniform("u_matrix", m);
 
-        /// generate a new VBO and get the associated ID
-        //        glGenBuffers(1, &gl_default_vbo);
-        //        GL_CHECK()
-
-        assert(gl_default_vbo != 0);
-        //        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
-        //        GL_CHECK()
-
         const vertex* t = buff.data();
-        uint32_t      data_size_in_bytes =
-            static_cast<uint32_t>(buff.size() * sizeof(vertex));
-        /// copy the data into the buffer object, when the buffer has been
-        /// initialized
-        glBufferData(
-            GL_ARRAY_BUFFER, data_size_in_bytes,
-            t, /// Specifies a pointer to data that will be copied into the data
-            /// store for initialization, or NULL if no data is to be copied.
-            GL_DYNAMIC_DRAW /// Specifies the expected usage pattern of the data
-            /// store
-        );
-        GL_CHECK()
-        /// update a subset of a buffer object's data store
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
-        GL_CHECK()
 
-        // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              nullptr);
-
-        GL_CHECK()
+                              &t->pos);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t->uv);
+        glEnableVertexAttribArray(2);
         GL_CHECK()
+
         // colors
         //        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE,
         //        sizeof(t.v[0]),
@@ -516,12 +482,6 @@ public:
         //        GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              reinterpret_cast<void*>(sizeof(vertex::pos)));
-
-        GL_CHECK()
-        glEnableVertexAttribArray(2);
-        GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(buff.size()));
         GL_CHECK()
