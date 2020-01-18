@@ -12,15 +12,15 @@
 #include <limits>
 #include <memory>
 
-const std::array<std::array<size_t, 4>, 7> figures = {{
-    {1, 3, 5, 7}, // I
-    {2, 4, 5, 7}, // S
-    {3, 5, 4, 6}, // Z
-    {3, 5, 4, 7}, // T
-    {2, 3, 5, 7}, // L
-    {3, 5, 7, 6}, // J
-    {2, 3, 4, 5}, // O
-}};
+const std::array<std::array<size_t, 4>, 7> figures = { {
+    { 1, 3, 5, 7 }, // I
+    { 2, 4, 5, 7 }, // S
+    { 3, 5, 4, 6 }, // Z
+    { 3, 5, 4, 7 }, // T
+    { 2, 3, 5, 7 }, // L
+    { 3, 5, 7, 6 }, // J
+    { 2, 3, 4, 5 }, // O
+} };
 // left down texture origin point
 const std::array<vec2, 7> second_texture_pos = { {
     { 0.f, 0.f },
@@ -35,7 +35,6 @@ const std::array<vec2, 7> second_texture_pos = { {
 const std::array<size_t, 4> select_figure(
     const std::array<std::array<size_t, 4>, 7>& fig)
 {
-
     std::array<size_t, 4> res;
     srand(static_cast<unsigned>(time(nullptr)));
     const size_t rand_index = static_cast<size_t>(rand());
@@ -118,7 +117,8 @@ int main()
 
     int   d_pos       = 0;
     float start_timer = engine->get_time_from_init();
-    float dt          = 0.25f;
+    float start_speed = 0.4f;
+    float dt          = start_speed;
     // first figure start position '-4' row from top, center
     const size_t start_pos =
         (height_main_field - 4) * width_main_field + width_main_field / 2;
@@ -156,32 +156,31 @@ int main()
                     if (engine->is_key_down(keys::right))
 
                         d_pos += 1;
-                        break;
+                    break;
 
                 case keys::left:
                     if (engine->is_key_down(keys::left))
 
                         d_pos -= 1;
-                        break;
+                    break;
 
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
 
                         rotate = true;
-                        break;
+                    break;
 
                 case keys::down:
                     if (engine->is_key_down(keys::down))
 
                         dt = 0.01f;
-                        break;
+                    break;
 
                 case keys::pause:
                     if (engine->is_key_down(keys::pause))
 
                         pause == false ? pause = true : pause = false;
-                        break;
-
+                    break;
             }
         }
         if (pause)
@@ -191,7 +190,7 @@ int main()
         prev = playing_figure;
         main_field.clear_position(playing_figure);
 
-        playing_figure.figure_change_position(static_cast<size_t>( d_pos));
+        playing_figure.figure_change_position(static_cast<size_t>(d_pos));
         if (!(main_field.check_field_border(playing_figure) &&
               main_field.check_empty_cell(playing_figure) &&
               main_field.check_figure_horizont(prev, playing_figure)))
@@ -275,7 +274,7 @@ int main()
         main_field_vert_buf = engine->create_vertex_buffer(
             &main_field_vert[0], main_field_vert.size());
         rotate = false;
-        dt     = 0.4f;
+        dt     = start_speed;
         d_pos  = 0;
 
         // back

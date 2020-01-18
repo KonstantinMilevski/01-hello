@@ -167,8 +167,8 @@ bool field::check_full_line(std::vector<cell>::iterator line)
 {
     size_t                      count{ 0 };
     std::vector<cell>::iterator beg = line;
-    std::vector<cell>::iterator end = line +  col_;
-    for (; beg != end; beg++)
+    std::advance(line, col_);
+    for (; beg != line; beg++)
     {
         if (!beg->is_empty)
         {
@@ -184,13 +184,12 @@ bool field::check_full_line(std::vector<cell>::iterator line)
 void field::check_field_line()
 {
     std::vector<cell> temp;
-    temp.reserve(row_ * col_);
-    auto it = begin(field_);
-    for (; it != end(field_); it += col_)
+    auto              it = begin(field_);
+    for (; it != end(field_); std::advance(it, col_))
     {
         if (!check_full_line(it))
         {
-            temp.insert(end(temp), it, it + col_);
+            std::copy_n(it, col_, std::back_inserter(temp));
         }
     }
     if (!temp.empty())
@@ -252,7 +251,7 @@ void figure::figure_change_position(const size_t& pos)
 void figure::figure_rotate(const size_t& f_width)
 {
     std::array<vec2, 4> coord_XY;
-    for (auto i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         float x          = coord_.at(i) % f_width;
         float y          = coord_.at(i) / f_width;
@@ -260,15 +259,17 @@ void figure::figure_rotate(const size_t& f_width)
         coord_XY.at(i).y = y;
     }
     vec2 centr = coord_XY.at(1);
-    int new_pos_x(0);
-    int new_pos_y(0);
+    int  new_pos_x(0);
+    int  new_pos_y(0);
     int  move_left  = 0;
     int  move_right = 0;
     int  compare    = 0;
     for (int i = 0; i < 4; i++)
     {
-        new_pos_x = static_cast<int>( centr.x - (coord_XY.at(static_cast<int>(i)).y - centr.y));
-        new_pos_y = centr.y + (coord_XY.at(i).x - centr.x);
+        new_pos_x = static_cast<int>(
+            centr.x - (coord_XY.at(static_cast<size_t>(i)).y - centr.y));
+        new_pos_y = static_cast<int>(
+            centr.y + (coord_XY.at(static_cast<size_t>(i)).x - centr.x));
         if (new_pos_x < 0)
         {
             compare = new_pos_x + 0;
@@ -277,17 +278,20 @@ void figure::figure_rotate(const size_t& f_width)
         }
         if (new_pos_x > static_cast<int>(f_width) - 1)
         {
-            compare = new_pos_x - (static_cast<int>( f_width) - 1);
+            compare = new_pos_x - (static_cast<int>(f_width) - 1);
             if (move_left < compare)
                 move_left = compare;
         }
 
-        coord_.at(i) = new_pos_x + new_pos_y * f_width;
+        coord_.at(static_cast<size_t>(i)) =
+            static_cast<size_t>(new_pos_x) +
+            static_cast<size_t>(new_pos_y) * f_width;
     }
     if (move_right)
     {
-        std::for_each(begin(coord_), end(coord_),
-                      [&move_right](size_t& i) { i -= static_cast<size_t>(move_right); });
+        std::for_each(begin(coord_), end(coord_), [&move_right](size_t& i) {
+            i -= static_cast<size_t>(move_right);
+        });
     }
     if (move_left)
         for (size_t i = 0; i < 4; i++)
