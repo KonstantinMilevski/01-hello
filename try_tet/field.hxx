@@ -50,8 +50,13 @@ struct cell
     block cell_;
     bool  is_empty = true;
 };
+class field;
+
 class figure
 {
+
+    friend class field;
+
 public:
     figure();
     figure(std::array<size_t, 4>& coord, size_t f_width);
@@ -64,12 +69,10 @@ private:
     std::array<size_t, 4> coord_;
 };
 
-struct field
+class field
 {
-    friend figure;
-
+public:
     field(const size_t col, const size_t row);
-
     void                set_block_on_field(block& bl, const size_t& pos);
     void                set_figure(const figure& fig, block& bl);
     std::vector<vertex> occupied_cells();
@@ -78,14 +81,14 @@ struct field
     vec2                return_cell_pos(const size_t& n);
     bool                check_field_border(const figure& fig);
     bool                check_empty_cell(const figure& fig);
+    void                check_field_line();
+    rect                field_rect();
     bool check_figure_horizont(const figure& old, const figure& next);
-    bool check_full_line(std::vector<cell>::iterator line);
-    void check_field_line();
-    rect field_rect();
-
-    void set_texture();
 
 private:
+    bool check_full_line(std::vector<cell>::iterator line);
+    void set_texture();
+
     size_t            col_;
     size_t            row_;
     std::vector<cell> field_;
