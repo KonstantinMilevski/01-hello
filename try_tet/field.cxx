@@ -21,19 +21,18 @@ std::vector<vertex> block::build_block()
     ///
     /// 0 left-up, clockwise
     /// vec2.pos
-    quad[0].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5;
-    quad[0].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5;
-    quad[1].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5;
-    quad[1].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5;
+    quad[0].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5f;
+    quad[0].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5f;
+    quad[1].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5f;
+    quad[1].pos.y = xy_rect_.pos.y + xy_rect_.size.y * 0.5f;
 
-    quad[2].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5;
-    quad[2].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5;
-    quad[3].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5;
-    quad[3].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5;
+    quad[2].pos.x = xy_rect_.pos.x + xy_rect_.size.x * 0.5f;
+    quad[2].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5f;
+    quad[3].pos.x = xy_rect_.pos.x - xy_rect_.size.x * 0.5f;
+    quad[3].pos.y = xy_rect_.pos.y - xy_rect_.size.y * 0.5f;
 
     /// vec2.uv, OpenGL texture lower left angle is (0, 0) coordinate
-    //    float side_x=uv_rect_.size.x-uv_rect_.pos.x;
-    //    float side_y=uv_rect_.size.y-uv_rect_.pos.y;
+
     quad[3].uv.x = uv_rect_.pos.x;
     quad[3].uv.y = uv_rect_.pos.y;
     quad[0].uv.x = quad[3].uv.x;
@@ -67,10 +66,10 @@ field::field(const size_t col, const size_t row)
 {
     {
         field_.resize(col * row);
-        for (auto i = 0; i < col * row; i++)
+        for (size_t i = 0; i < col * row; i++)
         {
-            float x = i % col * cell_size + 0.5 * cell_size;
-            float y = i / col * cell_size + 0.5 * cell_size;
+            float x = i % col * cell_size + 0.5f * cell_size;
+            float y = i / col * cell_size + 0.5f * cell_size;
             rect  rect_xy({ x, y }, { cell_size, cell_size });
             rect  rect_uv({ x, y }, { cell_size, cell_size });
             field_.at(i).cell_.xy_rect_ = rect_xy;
@@ -137,9 +136,9 @@ vec2 field::return_cell_pos(const size_t& n)
 
 bool field::check_field_border(const figure& fig)
 {
-    for (auto i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)
     {
-        if (fig.coord_.at(i) >= row_ * col_ || fig.coord_.at(i) < 0)
+        if (fig.coord_.at(i) >= row_ * col_ /*|| fig.coord_.at(i) < 0*/)
             return false;
     }
     return true;
@@ -147,7 +146,7 @@ bool field::check_field_border(const figure& fig)
 
 bool field::check_empty_cell(const figure& fig)
 {
-    for (auto i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         if (field_.at(fig.coord_.at(i)).is_empty == false)
             return false;
@@ -156,7 +155,7 @@ bool field::check_empty_cell(const figure& fig)
 }
 bool field::check_figure_horizont(const figure& old, const figure& next)
 {
-    for (auto i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)
     {
         if (old.coord_.at(i) / col_ != next.coord_.at(i) / col_)
             return false;
@@ -168,8 +167,8 @@ bool field::check_full_line(std::vector<cell>::iterator line)
 {
     size_t                      count{ 0 };
     std::vector<cell>::iterator beg = line;
-    std::vector<cell>::iterator end = line + col_;
-    for (beg; beg != end; beg++)
+    std::vector<cell>::iterator end = line +  col_;
+    for (; beg != end; beg++)
     {
         if (!beg->is_empty)
         {
@@ -187,7 +186,7 @@ void field::check_field_line()
     std::vector<cell> temp;
     temp.reserve(row_ * col_);
     auto it = begin(field_);
-    for (it; it != end(field_); it += col_)
+    for (; it != end(field_); it += col_)
     {
         if (!check_full_line(it))
         {
@@ -198,7 +197,7 @@ void field::check_field_line()
     {
         temp.resize(row_ * col_);
         this->clear_field();
-        for (int i = 0; i < row_ * col_; i++)
+        for (size_t i = 0; i < row_ * col_; i++)
         {
             field_.at(i).is_empty            = temp.at(i).is_empty;
             field_.at(i).cell_.uv_rect_.size = temp.at(i).cell_.uv_rect_.size;
@@ -209,17 +208,17 @@ void field::check_field_line()
 rect field::field_rect()
 {
     float width = field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x +
-                  0.5 * cell_size - field_.at(0).cell_.uv_rect_.pos.x -
-                  0.5 * cell_size;
+                  0.5f * cell_size - field_.at(0).cell_.uv_rect_.pos.x -
+                  0.5f * cell_size;
     float height = field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y +
-                   0.5 * cell_size - field_.at(0).cell_.uv_rect_.pos.y -
-                   0.5 * cell_size;
+                   0.5f * cell_size - field_.at(0).cell_.uv_rect_.pos.y -
+                   0.5f * cell_size;
     vec2 left_down(
-        field_.at(0).cell_.uv_rect_.pos.x - 0.5 * cell_size + 0.5 * width,
-        field_.at(0).cell_.uv_rect_.pos.y - 0.5 * cell_size + 0.5 * height);
+        field_.at(0).cell_.uv_rect_.pos.x - 0.5f * cell_size + 0.5f * width,
+        field_.at(0).cell_.uv_rect_.pos.y - 0.5f * cell_size + 0.5f * height);
     vec2 right_up(
-        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5 * cell_size,
-        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5 * cell_size);
+        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.x + 0.5f * cell_size,
+        field_.at(col_ * row_ - 1).cell_.uv_rect_.pos.y + 0.5f * cell_size);
     return { left_down, { width, height } };
 }
 
@@ -261,38 +260,39 @@ void figure::figure_rotate(const size_t& f_width)
         coord_XY.at(i).y = y;
     }
     vec2 centr = coord_XY.at(1);
-    vec2 new_pos;
+    int new_pos_x(0);
+    int new_pos_y(0);
     int  move_left  = 0;
     int  move_right = 0;
     int  compare    = 0;
-    for (auto i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        new_pos.x = centr.x - (coord_XY.at(i).y - centr.y);
-        new_pos.y = centr.y + (coord_XY.at(i).x - centr.x);
-        if (new_pos.x < 0)
+        new_pos_x = static_cast<int>( centr.x - (coord_XY.at(static_cast<int>(i)).y - centr.y));
+        new_pos_y = centr.y + (coord_XY.at(i).x - centr.x);
+        if (new_pos_x < 0)
         {
-            compare = new_pos.x + 0;
+            compare = new_pos_x + 0;
             if (move_right > compare)
                 move_right = compare;
         }
-        if (new_pos.x > f_width - 1)
+        if (new_pos_x > static_cast<int>(f_width) - 1)
         {
-            compare = new_pos.x - (f_width - 1);
+            compare = new_pos_x - (static_cast<int>( f_width) - 1);
             if (move_left < compare)
                 move_left = compare;
         }
 
-        coord_.at(i) = new_pos.x + new_pos.y * f_width;
+        coord_.at(i) = new_pos_x + new_pos_y * f_width;
     }
     if (move_right)
     {
         std::for_each(begin(coord_), end(coord_),
-                      [&move_right](size_t& i) { i -= move_right; });
+                      [&move_right](size_t& i) { i -= static_cast<size_t>(move_right); });
     }
     if (move_left)
-        for (auto i = 0; i < 4; i++)
+        for (size_t i = 0; i < 4; i++)
         {
-            coord_.at(i) -= move_left;
+            coord_.at(i) -= static_cast<size_t>(move_left);
         }
 }
 

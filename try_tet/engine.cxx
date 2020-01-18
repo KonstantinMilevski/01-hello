@@ -6,17 +6,17 @@
 #include <algorithm>
 #include <cassert>
 #include <exception>
-#include <filesystem>
+//#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
-/// check opengl function
 
-unsigned long text_width  = 0;
-unsigned long text_height = 0;
 
-/// kod for SDL_events
+//unsigned long text_width  = 0;
+//unsigned long text_height = 0;
+
+// kod for SDL_events
 
 struct bind
 {
@@ -59,7 +59,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
     return false;
 }
 
-///
+//
 std::ostream& operator<<(std::ostream& os, const SDL_version& v)
 {
     os << v.major << ':';
@@ -170,7 +170,7 @@ vec2 operator-(const vec2& l, const vec2& r)
     result.y = l.y - r.y;
     return result;
 }
-///
+//
 matrix::matrix()
     : row0(1.0f, 0.f)
     , row1(0.f, 1.f)
@@ -234,17 +234,18 @@ matrix operator*(const matrix& m1, const matrix& m2)
 
     return r;
 }
-///
+//
 vertex_buffer::~vertex_buffer() {}
 texture::~texture() {}
 engine::~engine() {}
-/// engine
+// engine
 
-/// engine_impl
+// engine_impl
+
 class engine_impl final : public engine
 {
 public:
-    std::string initialize(std::string_view str) override final
+    std::string initialize(std::string_view /*str*/) override final
     {
 
         using namespace std;
@@ -253,7 +254,7 @@ public:
 
         SDL_version compiled = { 0, 0, 0 };
         SDL_version linked   = { 0, 0, 0 };
-        SDL_VERSION(&compiled);
+        SDL_VERSION(&compiled)
         SDL_GetVersion(&linked);
         if (SDL_COMPILEDVERSION !=
             SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
@@ -311,7 +312,7 @@ public:
             std::cerr << "error: failed to initialize glad" << std::endl;
         }
 
-        /// end glGenBuffers
+        // end glGenBuffers
         shader01 = new shader_gl_es20(
             R"(
                     uniform mat3 u_matrix;
@@ -449,12 +450,12 @@ public:
 
     void destroy_texture(texture* t) final { delete t; }
 
-    vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t count)
+    vertex_buffer* create_vertex_buffer(const vertex* vert, std::size_t count) override
     {
         assert(vert != nullptr);
         return new vertex_buffer_impl(vert, count);
     }
-    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+    void destroy_vertex_buffer(vertex_buffer* buffer)override { delete buffer; }
 
     float get_time_from_init() final
     {
@@ -462,14 +463,14 @@ public:
         float         seconds = ms_from_library_initialization * 0.001f;
         return seconds;
     }
-
+~engine_impl(){}
 private:
     SDL_Window*     window         = nullptr;
     SDL_GLContext   gl_context     = nullptr;
-    GLuint          program_id_    = 0;
+    //GLuint          program_id_    = 0;
     shader_gl_es20* shader00       = nullptr;
     shader_gl_es20* shader01       = nullptr;
-    uint32_t        gl_default_vbo = 0;
+    //uint32_t        gl_default_vbo = 0;
 };
 
 static bool already_exist = false;

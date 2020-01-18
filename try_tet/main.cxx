@@ -12,15 +12,15 @@
 #include <limits>
 #include <memory>
 
-const std::array<std::array<size_t, 4>, 7> figures = {
-    1, 3, 5, 7, // I
-    2, 4, 5, 7, // S
-    3, 5, 4, 6, // Z
-    3, 5, 4, 7, // T
-    2, 3, 5, 7, // L
-    3, 5, 7, 6, // J
-    2, 3, 4, 5, // O
-};
+const std::array<std::array<size_t, 4>, 7> figures = {{
+    {1, 3, 5, 7}, // I
+    {2, 4, 5, 7}, // S
+    {3, 5, 4, 6}, // Z
+    {3, 5, 4, 7}, // T
+    {2, 3, 5, 7}, // L
+    {3, 5, 7, 6}, // J
+    {2, 3, 4, 5}, // O
+}};
 // left down texture origin point
 const std::array<vec2, 7> second_texture_pos = { {
     { 0.f, 0.f },
@@ -37,7 +37,7 @@ const std::array<size_t, 4> select_figure(
 {
 
     std::array<size_t, 4> res;
-    srand(time(0));
+    srand(static_cast<unsigned>(time(nullptr)));
     const size_t rand_index = static_cast<size_t>(rand());
     const size_t row        = rand_index % 7;
     for (size_t i = 0; i < 4; i++)
@@ -154,37 +154,34 @@ int main()
 
                 case keys::right:
                     if (engine->is_key_down(keys::right))
-                    {
+
                         d_pos += 1;
                         break;
-                    }
+
                 case keys::left:
                     if (engine->is_key_down(keys::left))
-                    {
+
                         d_pos -= 1;
                         break;
-                    }
+
                 case keys::rotate:
                     if (engine->is_key_down(keys::rotate))
-                    {
+
                         rotate = true;
                         break;
-                    }
+
                 case keys::down:
                     if (engine->is_key_down(keys::down))
-                    {
+
                         dt = 0.01f;
                         break;
-                    }
+
                 case keys::pause:
                     if (engine->is_key_down(keys::pause))
-                    {
+
                         pause == false ? pause = true : pause = false;
                         break;
-                    }
 
-                default:
-                    break;
             }
         }
         if (pause)
@@ -194,7 +191,7 @@ int main()
         prev = playing_figure;
         main_field.clear_position(playing_figure);
 
-        playing_figure.figure_change_position(d_pos);
+        playing_figure.figure_change_position(static_cast<size_t>( d_pos));
         if (!(main_field.check_field_border(playing_figure) &&
               main_field.check_empty_cell(playing_figure) &&
               main_field.check_figure_horizont(prev, playing_figure)))
@@ -230,9 +227,9 @@ int main()
         if (timer > dt)
         {
             prev  = playing_figure;
-            d_pos = -width_main_field;
+            d_pos = -static_cast<int>(width_main_field);
             main_field.clear_position(playing_figure);
-            playing_figure.figure_change_position(d_pos);
+            playing_figure.figure_change_position(static_cast<size_t>(d_pos));
 
             // clear field for next figure when time is coming
             if (!next)
@@ -278,7 +275,7 @@ int main()
         main_field_vert_buf = engine->create_vertex_buffer(
             &main_field_vert[0], main_field_vert.size());
         rotate = false;
-        dt     = 0.4;
+        dt     = 0.4f;
         d_pos  = 0;
 
         // back

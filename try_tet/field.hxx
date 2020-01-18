@@ -2,11 +2,11 @@
 #include "engine.hxx"
 #include <array>
 
-/// global
+// global
 
 static float window_scale = static_cast<float>(screen_height) / screen_width;
-/// field 10x25 GL from -0.5 to 0.5 gl_width     =1.f
-/// field 10x25 GL from -0.1 to 0.1 gl_width     =2.f
+// field 10x25 GL from -0.5 to 0.5 gl_width     =1.f
+// field 10x25 GL from -0.1 to 0.1 gl_width     =2.f
 constexpr size_t field_height = 20.f;
 constexpr size_t field_width  = 10.f;
 constexpr size_t cell_size    = 10.f;
@@ -39,9 +39,9 @@ struct block
     std::vector<vertex> build_block();
     void                set_position(const vec2& new_pos);
     void                set_texture_pos(const rect& new_pos);
-    /// centr of cell
+    // centr of cell
     rect xy_rect_;
-    /// position of texture, first-point 0-left, down; second-size
+    // position of texture, first-point 0-left, down; second-size
     rect uv_rect_;
 };
 

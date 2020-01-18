@@ -173,7 +173,7 @@ public:
 class engine
 {
 public:
-    ~engine();
+    virtual ~engine();
     /// create main window
     /// on success return empty string
     virtual std::string initialize(std::string_view) = 0;
