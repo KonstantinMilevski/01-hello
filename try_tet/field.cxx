@@ -171,7 +171,6 @@ bool field::check_full_line(std::vector<cell>::iterator line)
     std::vector<cell>::iterator end = line + col_;
     for (beg; beg != end; beg++)
     {
-
         if (!beg->is_empty)
         {
             count++;

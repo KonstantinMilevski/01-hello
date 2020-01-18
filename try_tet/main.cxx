@@ -12,7 +12,7 @@
 #include <limits>
 #include <memory>
 
-std::array<std::array<size_t, 4>, 7> figures = {
+const std::array<std::array<size_t, 4>, 7> figures = {
     1, 3, 5, 7, // I
     2, 4, 5, 7, // S
     3, 5, 4, 6, // Z
@@ -22,7 +22,7 @@ std::array<std::array<size_t, 4>, 7> figures = {
     2, 3, 4, 5, // O
 };
 // left down texture origin point
-std::array<vec2, 7> second_texture_pos = { {
+const std::array<vec2, 7> second_texture_pos = { {
     { 0.f, 0.f },
     { 1.f / 7, 0.f },
     { 2.f / 7, 0.f },
@@ -32,7 +32,8 @@ std::array<vec2, 7> second_texture_pos = { {
     { 6.f / 7, 0.f },
 } };
 
-std::array<size_t, 4> select_figure(std::array<std::array<size_t, 4>, 7>& fig)
+const std::array<size_t, 4> select_figure(
+    const std::array<std::array<size_t, 4>, 7>& fig)
 {
 
     std::array<size_t, 4> res;
@@ -45,7 +46,7 @@ std::array<size_t, 4> select_figure(std::array<std::array<size_t, 4>, 7>& fig)
     }
     return res;
 }
-rect generate_texture_color(std::array<vec2, 7>& text_pos)
+const rect generate_texture_color(const std::array<vec2, 7>& text_pos)
 {
 
     const size_t rand_index    = static_cast<size_t>(rand());
@@ -119,8 +120,9 @@ int main()
     float start_timer = engine->get_time_from_init();
     float dt          = 0.25f;
     // first figure start position '-4' row from top, center
-    start_figure.figure_change_position(
-        (height_main_field - 4) * width_main_field + width_main_field / 2);
+    const size_t start_pos =
+        (height_main_field - 4) * width_main_field + width_main_field / 2;
+    start_figure.figure_change_position(start_pos);
     bool   rotate        = false;
     bool   continue_loop = true;
     bool   start_game    = true;
@@ -251,14 +253,13 @@ int main()
                 next_figure = { next_coord, width_main_field };
                 main_block.set_texture_pos(next_texture);
                 playing_figure = next_figure;
-                playing_figure.figure_change_position((height_main_field - 4) *
-                                                          width_main_field +
-                                                      width_main_field / 2);
+                playing_figure.figure_change_position(start_pos);
+                // check full line
                 main_field.check_field_line();
                 // check top position & exit
                 if (prev.compare_position(playing_figure))
                 {
-                    std::cerr << "Game OVer";
+                    std::cout << "Game OVer" << std::endl;
                     break;
                 }
                 main_field.set_figure(playing_figure, main_block);
