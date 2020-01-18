@@ -311,68 +311,33 @@ public:
             std::cerr << "error: failed to initialize glad" << std::endl;
         }
 
-        shader00 = new shader_gl_es20(
-            R"(
-                attribute vec2 a_position;
-                attribute vec2 a_tex_coord;
-                //attribute vec4 a_color;
-                //varying vec4 v_color;
-                varying vec2 v_tex_coord;
-                void main()
-                {
-                v_tex_coord = a_tex_coord;
-                //v_color = a_color;
-                gl_Position = vec4(a_position, 0.0, 1.0);
-                }
-                )",
-            R"(
-                #ifdef GL_ES
-                precision mediump float;
-                #endif
-                varying vec2 v_tex_coord;
-                //varying vec4 v_color;
-                uniform sampler2D s_texture;
-                void main()
-                {
-                gl_FragColor = texture2D(s_texture, v_tex_coord); //* v_color;
-                gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0)+texture2D(s_texture, v_tex_coord);
-                }
-                )",
-            { { 0, "a_position" },
-              //{ 1, "a_color" },
-              { 2, "a_tex_coord" } });
-
-        // turn on rendering with just created shader program
-        shader00->use();
-
         /// end glGenBuffers
         shader01 = new shader_gl_es20(
             R"(
                     uniform mat3 u_matrix;
                     attribute vec2 a_position;
                     attribute vec2 a_tex_coord;
-                    //attribute vec4 a_color;
-                    //varying vec4 v_color;
+                    attribute vec4 a_color;
+                    varying vec4 v_color;
                     varying vec2 v_tex_coord;
                     void main()
                     {
                     v_tex_coord = a_tex_coord;
-                    //v_color = a_color;
+                    v_color = a_color;
                     vec3 pos = vec3(a_position, 1.0) * u_matrix;
                     gl_Position = vec4(pos, 1.0);
                     }
                     )",
             R"(
                     varying vec2 v_tex_coord;
-                    //varying vec4 v_color;
+                    varying vec4 v_color;
                     uniform sampler2D s_texture;
                     void main()
                     {
-                    gl_FragColor = texture2D(s_texture, v_tex_coord);// * v_color;
+                    gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                     }
                     )",
-            { { 0, "a_position" },
-              /*{ 1, "a_color" }, */ { 2, "a_tex_coord" } });
+            { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
 
         glEnable(GL_BLEND);
         GL_CHECK()
@@ -390,72 +355,8 @@ public:
         SDL_Quit();
     }
 
-    void render_tetris(const vertex_buffer& buff, texture* tex) final
-    {
-
-        shader00->use();
-        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
-        texture->bind();
-        shader00->set_uniform("s_texture", texture);
-
-        /// generate a new VBO and get the associated ID
-        glGenBuffers(1, &gl_default_vbo);
-        GL_CHECK()
-
-        assert(gl_default_vbo != 0);
-        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
-        GL_CHECK()
-
-        const vertex* t = buff.data();
-        uint32_t      data_size_in_bytes =
-            static_cast<uint32_t>(buff.size() * sizeof(vertex));
-        /// copy the data into the buffer object, when the buffer has been
-        /// initialized
-        glBufferData(
-            GL_ARRAY_BUFFER, data_size_in_bytes,
-            t, /// Specifies a pointer to data that will be copied into the data
-            /// store for initialization, or NULL if no data is to be copied.
-            GL_DYNAMIC_DRAW /// Specifies the expected usage pattern of the data
-            /// store
-        );
-        GL_CHECK()
-        /// update a subset of a buffer object's data store
-        //        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
-        //        GL_CHECK()
-
-        // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t->pos);
-
-        GL_CHECK()
-        glEnableVertexAttribArray(0);
-        GL_CHECK()
-        // colors
-        //        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE,
-        //        sizeof(t.v[0]),
-        //                              &t.v[0].c);
-        //        GL_CHECK()
-        //        glEnableVertexAttribArray(1);
-        //        GL_CHECK()
-
-        // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t->uv);
-
-        GL_CHECK()
-        glEnableVertexAttribArray(2);
-        GL_CHECK()
-
-        glDrawArrays(GL_TRIANGLES, 0, buff.size());
-        GL_CHECK()
-
-        //        glDisableVertexAttribArray(1);
-        //        GL_CHECK()
-        glDisableVertexAttribArray(2);
-        GL_CHECK()
-    }
-    ///
-    void render_tet(const vertex_buffer& buff, texture* tex,
-                    const matrix& m) final
+    void render_tetris(const vertex_buffer& buff, texture* tex,
+                       const matrix& m) final
     {
 
         shader01->use();
@@ -474,12 +375,11 @@ public:
         GL_CHECK()
 
         // colors
-        //        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE,
-        //        sizeof(t.v[0]),
-        //                              &t.v[0].c);
-        //        GL_CHECK()
-        //        glEnableVertexAttribArray(1);
-        //        GL_CHECK()
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex),
+                              &t->c);
+        GL_CHECK()
+        glEnableVertexAttribArray(1);
+        GL_CHECK()
 
         // texture coordinates
 

@@ -110,10 +110,7 @@ std::vector<vertex> field::occupied_cells()
                                 end(temp_vertexes));
         }
     }
-    for (auto var : occupied_pos)
-    {
-        var.c = { 1.0, 1.0, 1.0, 1.0 };
-    }
+
     return occupied_pos;
 }
 
@@ -186,7 +183,7 @@ bool field::check_full_line(std::vector<cell>::iterator line)
         return false;
 }
 
-void field::check_field()
+void field::check_field_line()
 {
     std::vector<cell> temp;
     temp.reserve(row_ * col_);

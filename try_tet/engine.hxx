@@ -111,7 +111,7 @@ struct vertex
     }
     vec2  pos;
     vec2  uv;
-    color c;
+    color c = { 1.0, 1.0, 1.0, 1.0 };
 };
 
 struct triangle
@@ -192,8 +192,8 @@ public:
     virtual void        uninitialize()                   = 0;
     virtual bool        read_event(event& e)             = 0;
     virtual bool        is_key_down(const enum keys key) = 0;
-    virtual void        render_tet(const vertex_buffer& buff, texture* tex,
-                                   const matrix& m)      = 0;
+    virtual void        render_tetris(const vertex_buffer& buff, texture* tex,
+                                      const matrix& m)   = 0;
     virtual float       get_time_from_init()             = 0;
 
     virtual vertex_buffer* create_vertex_buffer(const vertex*, std::size_t) = 0;
@@ -201,7 +201,6 @@ public:
 
     virtual texture* create_texture(std::string_view path) = 0;
 
-    virtual void destroy_texture(texture* t)                            = 0;
-    virtual void render_tetris(const vertex_buffer& buff, texture* tex) = 0;
-    virtual void swap_buffer()                                          = 0;
+    virtual void destroy_texture(texture* t) = 0;
+    virtual void swap_buffer()               = 0;
 };

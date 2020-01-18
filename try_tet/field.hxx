@@ -50,8 +50,9 @@ struct cell
     block cell_;
     bool  is_empty = true;
 };
-struct figure
+class figure
 {
+public:
     figure();
     figure(std::array<size_t, 4>& coord, size_t f_width);
 
@@ -59,12 +60,13 @@ struct figure
     void figure_rotate(const size_t& f_width);
     bool compare_position(const figure& fig);
 
+private:
     std::array<size_t, 4> coord_;
 };
 
 struct field
 {
-    std::array<size_t, 4> cur_fig;
+    friend figure;
 
     field(const size_t col, const size_t row);
 
@@ -78,11 +80,12 @@ struct field
     bool                check_empty_cell(const figure& fig);
     bool check_figure_horizont(const figure& old, const figure& next);
     bool check_full_line(std::vector<cell>::iterator line);
-    void check_field();
+    void check_field_line();
     rect field_rect();
 
     void set_texture();
 
+private:
     size_t            col_;
     size_t            row_;
     std::vector<cell> field_;
